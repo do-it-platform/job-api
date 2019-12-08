@@ -1,0 +1,58 @@
+{
+  "type": "record",
+  "name": "JobCreatedEvent",
+  "namespace": "de.doit.jobapi.domain.model",
+  "fields": [
+    {
+      "name": "id",
+      "type": {
+        "type": "string",
+        "logicalType": "UUID"
+      }
+    },
+    {
+      "name": "vendorId",
+      "type": {
+        "type": "string",
+        "logicalType": "UUID"
+      }
+    },
+    {
+      "name": "title",
+      "type": "string"
+    },
+    {
+      "name": "description",
+      "type": "string"
+    },
+    {
+      "name": "location",
+      "type": {
+        "name": "Location",
+        "type": "record",
+        "namespace": "de.doit.jobapi.domain.model",
+        "fields": [
+          {
+            "name": "latitude",
+            "type": "double",
+            "doc": "returns the latitude of the geo location"
+          },
+          {
+            "name": "longitude",
+            "type": "double",
+            "doc": "returns the longitude of the geo location"
+          }
+        ]
+      }
+    },
+    {
+      "name": "payment",
+      "type": {
+        "type": "bytes",
+        "logicalType": "decimal",
+        "precision": 2,
+        "scale": 2
+      }
+    }
+  ]
+}
