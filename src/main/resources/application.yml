@@ -1,0 +1,9 @@
+spring:
+  kafka:
+    consumer:
+      group-id: foo
+      auto-offset-reset: earliest
+---
+japi:
+  kafka:
+    topic: job-log
