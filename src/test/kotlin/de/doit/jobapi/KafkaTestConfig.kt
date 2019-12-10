@@ -6,7 +6,6 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde
 import org.apache.avro.generic.GenericRecord
-import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -34,7 +33,7 @@ class KafkaTestConfig(private val props: KafkaProperties) {
     @Bean
     fun consumerFactory(): ConsumerFactory<String, GenericRecord> {
         val consumerProps = props.buildConsumerProperties()
-        consumerProps[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG]
+        consumerProps[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
         return DefaultKafkaConsumerFactory(
                 consumerProps,
                 StringDeserializer(),
@@ -57,7 +56,9 @@ class KafkaTestConfig(private val props: KafkaProperties) {
     @Bean
     fun producerFactory(): ProducerFactory<String, GenericRecord> {
         val producerProps = props.buildProducerProperties()
-        producerProps[ProducerConfig.MAX_BLOCK_MS_CONFIG] = 3000
+        producerProps[ProducerConfig.MAX_BLOCK_MS_CONFIG] = 2000
+        producerProps[ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG] = 2000
+        producerProps[ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG] = 2000
         return DefaultKafkaProducerFactory(
                 producerProps,
                 StringSerializer(),
