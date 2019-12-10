@@ -1,8 +1,12 @@
 spring:
   kafka:
-    consumer:
-      group-id: foo
-      auto-offset-reset: earliest
+    bootstrap-servers: localhost:9092
+    properties:
+      schema.registry.url: http://localhost:8081
+    producer:
+      client-id: japi-producer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
 ---
 japi:
   kafka:
