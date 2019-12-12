@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class JobService internal constructor(@Autowired private val jobPublisher: JobPublisher) {
+class JobService internal constructor(@Autowired private val jobEventPublisher: JobEventPublisher) {
 
     companion object {
 
@@ -42,7 +42,7 @@ class JobService internal constructor(@Autowired private val jobPublisher: JobPu
         val jobPostedEvent = JobPostedEvent.newBuilder()
                 .setData(toJobDataRecord(jobId, vendorId, job))
                 .build()
-        jobPublisher.publish(jobId, jobPostedEvent)
+        jobEventPublisher.publish(jobId, jobPostedEvent)
 
         return toDTO(jobPostedEvent.getData())
     }
@@ -51,7 +51,7 @@ class JobService internal constructor(@Autowired private val jobPublisher: JobPu
         val jobUpdatedEvent = JobUpdatedEvent.newBuilder()
                 .setData(toJobDataRecord(jobId, vendorId, job))
                 .build()
-        jobPublisher.publish(jobId, jobUpdatedEvent)
+        jobEventPublisher.publish(jobId, jobUpdatedEvent)
     }
 
 }
