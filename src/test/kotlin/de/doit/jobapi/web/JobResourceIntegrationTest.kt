@@ -61,7 +61,7 @@ class JobResourceIntegrationTest {
             @DisplayName("should publish job-created event")
             fun postJobShouldPublishJobCreatedEvent() {
                 val userId = "2342-56456"
-                val jobInputData = easyRandom.nextObject(JobCreationDTO::class.java)
+                val jobInputData = easyRandom.nextObject(JobData::class.java)
 
                 client.post()
                         .uri("/jobs")
@@ -78,7 +78,7 @@ class JobResourceIntegrationTest {
                             val jobCreatedEvent = consumeLastJobEvent()
                             assertThat(jobCreatedEvent.key()).isEqualTo(jobOutputData!!.id.value)
                             assertThat(jobCreatedEvent.value())
-                                    .isInstanceOf(JobCreatedEvent::class.java)
+                                    .isInstanceOf(JobPostedEvent::class.java)
                                     .isEqualTo(jobCreatedEvent(jobInputData, jobOutputData.id, userId))
                         }
             }
@@ -86,7 +86,7 @@ class JobResourceIntegrationTest {
             @Test
             @DisplayName("should return dto after success")
             fun postJobShouldReturnDtoAfterSuccessfullyPublishedEvent() {
-                val jobInputData = easyRandom.nextObject(JobCreationDTO::class.java)
+                val jobInputData = easyRandom.nextObject(JobData::class.java)
 
                 client.post()
                         .uri("/jobs")
@@ -140,7 +140,7 @@ class JobResourceIntegrationTest {
             @Test
             @DisplayName("should return server error")
             fun postJobShouldReturnErrorWhenKafkaIsNotAvailable() {
-                val jobInputData = easyRandom.nextObject(JobCreationDTO::class.java)
+                val jobInputData = easyRandom.nextObject(JobData::class.java)
 
                 client.post()
                         .uri("/jobs")
@@ -157,8 +157,8 @@ class JobResourceIntegrationTest {
     }
 
 
-    private fun jobCreatedEvent(jobInputData: JobCreationDTO, jobId: JobId, userId: String): JobCreatedEvent {
-        return JobCreatedEvent.newBuilder()
+    private fun jobCreatedEvent(jobInputData: JobData, jobId: JobId, userId: String): JobPostedEvent {
+        return JobPostedEvent.newBuilder()
                 .setId(jobId.value)
                 .setTitle(jobInputData.title)
                 .setDescription(jobInputData.description)
@@ -172,14 +172,14 @@ class JobResourceIntegrationTest {
                 .build()
     }
 
-    private fun ObjectAssert<JobDTO>.containsValuesOf(jobCreationDTO: JobCreationDTO) {
+    private fun ObjectAssert<JobDTO>.containsValuesOf(jobData: JobData) {
         satisfies {
             it.apply {
-                assertThat(title).isEqualTo(jobCreationDTO.title)
-                assertThat(description).isEqualTo(jobCreationDTO.description)
-                assertThat(latitude).isEqualTo(jobCreationDTO.latitude)
-                assertThat(longitude).isEqualTo(jobCreationDTO.longitude)
-                assertThat(payment).isEqualTo(jobCreationDTO.payment.toPlainString())
+                assertThat(title).isEqualTo(jobData.title)
+                assertThat(description).isEqualTo(jobData.description)
+                assertThat(latitude).isEqualTo(jobData.latitude)
+                assertThat(longitude).isEqualTo(jobData.longitude)
+                assertThat(payment).isEqualTo(jobData.payment.toPlainString())
             }
         }
     }

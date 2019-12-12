@@ -8,9 +8,9 @@ import java.util.*
 @Service
 class JobService(@Autowired private val jobPublisher: JobPublisher) {
 
-    suspend fun add(vendorId: VendorId, job: JobCreationDTO): JobDTO {
+    suspend fun add(vendorId: VendorId, job: JobData): JobDTO {
         val publishedEvent = jobPublisher.publish(
-                JobCreatedEvent.newBuilder()
+                JobPostedEvent.newBuilder()
                         .setId(UUID.randomUUID().toString())
                         .setVendorId(vendorId.value)
                         .setTitle(job.title)

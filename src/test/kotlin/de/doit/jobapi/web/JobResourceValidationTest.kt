@@ -1,6 +1,6 @@
 package de.doit.jobapi.web
 
-import de.doit.jobapi.domain.model.JobCreationDTO
+import de.doit.jobapi.domain.model.JobData
 import org.jeasy.random.EasyRandom
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -29,7 +29,7 @@ class JobResourceValidationTest(@Autowired private val client: WebTestClient,
         @DisplayName("with invalid title should return bad request")
         @ParameterizedTest(name = "title = \"{0}\"")
         fun postJobWithMissingTitleShouldReturnBadRequest(title: String) {
-            val jobInputData = easyRandom.nextObject(JobCreationDTO::class.java).copy(title = title)
+            val jobInputData = easyRandom.nextObject(JobData::class.java).copy(title = title)
 
             client.post()
                     .uri("/jobs")
@@ -46,7 +46,7 @@ class JobResourceValidationTest(@Autowired private val client: WebTestClient,
         @DisplayName("with invalid description should return bad request")
         @ParameterizedTest(name = "description = \"{0}\"")
         fun postJobWithMissingDescriptionShouldReturnBadRequest(desc: String) {
-            val jobInputData = easyRandom.nextObject(JobCreationDTO::class.java).copy(description = desc)
+            val jobInputData = easyRandom.nextObject(JobData::class.java).copy(description = desc)
 
             client.post()
                     .uri("/jobs")
@@ -62,7 +62,7 @@ class JobResourceValidationTest(@Autowired private val client: WebTestClient,
         @DisplayName("with invalid payment should return bad request")
         @ParameterizedTest(name = "payment = {0}")
         fun postJobWithInvalidPaymentShouldReturnBadRequest(payment: Double) {
-            val jobInputData = easyRandom.nextObject(JobCreationDTO::class.java).copy(payment = payment.toBigDecimal())
+            val jobInputData = easyRandom.nextObject(JobData::class.java).copy(payment = payment.toBigDecimal())
 
             client.post()
                     .uri("/jobs")
@@ -78,7 +78,7 @@ class JobResourceValidationTest(@Autowired private val client: WebTestClient,
         @DisplayName("with invalid latitude should return bad request")
         @ParameterizedTest(name = "latitude = {0}")
         fun postJobWithInvalidLatitudeShouldReturnBadRequest(latitude: Double) {
-            val jobInputData = easyRandom.nextObject(JobCreationDTO::class.java).copy(latitude = latitude)
+            val jobInputData = easyRandom.nextObject(JobData::class.java).copy(latitude = latitude)
 
             client.post()
                     .uri("/jobs")
@@ -94,7 +94,7 @@ class JobResourceValidationTest(@Autowired private val client: WebTestClient,
         @DisplayName("with invalid longitude should return bad request")
         @ParameterizedTest(name = "longitude = {0}")
         fun postJobWithInvalidLongitudeShouldReturnBadRequest(longitude: Double) {
-            val jobInputData = easyRandom.nextObject(JobCreationDTO::class.java).copy(longitude = longitude)
+            val jobInputData = easyRandom.nextObject(JobData::class.java).copy(longitude = longitude)
 
             client.post()
                     .uri("/jobs")
@@ -115,7 +115,7 @@ class JobResourceValidationTest(@Autowired private val client: WebTestClient,
                     .uri("/jobs")
                     .header("X-User-Id", userId)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(easyRandom.nextObject(JobCreationDTO::class.java))
+                    .bodyValue(easyRandom.nextObject(JobData::class.java))
                     .accept(MediaType.APPLICATION_JSON)
                     .exchange()
                     .expectStatus().isBadRequest
