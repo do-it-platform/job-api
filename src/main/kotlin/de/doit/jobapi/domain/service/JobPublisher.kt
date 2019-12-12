@@ -1,7 +1,8 @@
 package de.doit.jobapi.domain.service
 
-import de.doit.jobapi.domain.model.JobPostedEvent
+import de.doit.jobapi.domain.model.JobId
+import org.apache.avro.specific.SpecificRecordBase
 
 interface JobPublisher {
-    suspend fun publish(jobPostedEvent: JobPostedEvent): JobPostedEvent
+    suspend fun <T: SpecificRecordBase> publish(jobId: JobId, jobEvent: T): T
 }

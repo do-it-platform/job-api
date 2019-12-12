@@ -70,7 +70,7 @@ class JobResourceIntegrationTest {
                         .bodyValue(jobInputData)
                         .accept(APPLICATION_JSON)
                         .exchange()
-                        .expectStatus().isOk
+                        .expectStatus().isCreated
                         .expectBody<JobDTO>()
                         .consumeWith {
                             val jobOutputData = it.responseBody
@@ -95,7 +95,7 @@ class JobResourceIntegrationTest {
                         .bodyValue(jobInputData)
                         .accept(APPLICATION_JSON)
                         .exchange()
-                        .expectStatus().isOk
+                        .expectStatus().isCreated
                         .expectBody<JobDTO>()
                         .consumeWith {
                             val jobOutputData = it.responseBody
@@ -126,7 +126,7 @@ class JobResourceIntegrationTest {
                         .bodyValue(jobInputData)
                         .accept(APPLICATION_JSON)
                         .exchange()
-                        .expectStatus().isOk
+                        .expectStatus().isCreated
                         .expectBody<JobDTO>()
                         .consumeWith {
                             existingJobId = it.responseBody!!.id
@@ -164,7 +164,8 @@ class JobResourceIntegrationTest {
                         .bodyValue(updatedJobData)
                         .accept(APPLICATION_JSON)
                         .exchange()
-                        .expectStatus().isAccepted
+                        .expectStatus().isNoContent
+                        .expectBody().isEmpty
 
                 val jobUpdatedEvent = consumeLastJobEvent()
                 assertThat(jobUpdatedEvent.key()).isEqualTo(existingJobId?.value)
@@ -231,6 +232,27 @@ class JobResourceIntegrationTest {
                         .header("X-User-Id", "1234")
                         .contentType(APPLICATION_JSON)
                         .bodyValue(jobInputData)
+                        .accept(APPLICATION_JSON)
+                        .exchange()
+                        .expectStatus().is5xxServerError
+            }
+
+        }
+
+        @Nested
+        @DisplayName("PUT /jobs/{id}")
+        inner class PutJobs {
+
+            @Test
+            @DisplayName("should return server error")
+            fun postJobShouldReturnErrorWhenKafkaIsNotAvailable() {
+                val jobUpdateData = easyRandom.nextObject(JobData::class.java)
+
+                client.put()
+                        .uri("/jobs/{id}", "43453")
+                        .header("X-User-Id", "1234")
+                        .contentType(APPLICATION_JSON)
+                        .bodyValue(jobUpdateData)
                         .accept(APPLICATION_JSON)
                         .exchange()
                         .expectStatus().is5xxServerError

@@ -1,6 +1,11 @@
 package de.doit.jobapi.web
 
 import de.doit.jobapi.domain.model.JobData
+import org.hamcrest.Matcher
+import org.hamcrest.Matchers
+import org.hamcrest.Matchers.*
+import org.hamcrest.core.AnyOf
+import org.hamcrest.core.IsEqual
 import org.jeasy.random.EasyRandom
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -12,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatus.*
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 
@@ -236,7 +243,7 @@ class JobResourceValidationTest(@Autowired private val client: WebTestClient,
                     .bodyValue(easyRandom.nextObject(JobData::class.java))
                     .accept(MediaType.APPLICATION_JSON)
                     .exchange()
-                    .expectStatus().isBadRequest
+                    .expectStatus().value(anyOf(equalTo(BAD_REQUEST.value()), equalTo(METHOD_NOT_ALLOWED.value())))
         }
 
     }
