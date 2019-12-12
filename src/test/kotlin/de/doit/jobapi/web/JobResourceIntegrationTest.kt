@@ -58,8 +58,8 @@ class JobResourceIntegrationTest {
         inner class PostJobs {
 
             @Test
-            @DisplayName("should publish job-created event")
-            fun postJobShouldPublishJobCreatedEvent() {
+            @DisplayName("should publish job-posted event")
+            fun postJobShouldPublishJobPostedEvent() {
                 val userId = "2342-56456"
                 val jobInputData = easyRandom.nextObject(JobData::class.java)
 
@@ -75,11 +75,11 @@ class JobResourceIntegrationTest {
                         .consumeWith {
                             val jobOutputData = it.responseBody
                             assertThat(jobOutputData).isNotNull
-                            val jobCreatedEvent = consumeLastJobEvent()
-                            assertThat(jobCreatedEvent.key()).isEqualTo(jobOutputData!!.id.value)
-                            assertThat(jobCreatedEvent.value())
+                            val jobPostedEvent = consumeLastJobEvent()
+                            assertThat(jobPostedEvent.key()).isEqualTo(jobOutputData!!.id.value)
+                            assertThat(jobPostedEvent.value())
                                     .isInstanceOf(JobPostedEvent::class.java)
-                                    .isEqualTo(jobCreatedEvent(jobInputData, jobOutputData.id, userId))
+                                    .isEqualTo(jobPostedEvent(jobInputData, jobOutputData.id, userId))
                         }
             }
 
@@ -157,7 +157,7 @@ class JobResourceIntegrationTest {
     }
 
 
-    private fun jobCreatedEvent(jobInputData: JobData, jobId: JobId, userId: String): JobPostedEvent {
+    private fun jobPostedEvent(jobInputData: JobData, jobId: JobId, userId: String): JobPostedEvent {
         return JobPostedEvent.newBuilder()
                 .setId(jobId.value)
                 .setTitle(jobInputData.title)
