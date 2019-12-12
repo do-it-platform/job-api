@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class JobService(@Autowired private val jobPublisher: JobPublisher) {
+class JobService internal constructor(@Autowired private val jobPublisher: JobPublisher) {
 
     companion object {
 
