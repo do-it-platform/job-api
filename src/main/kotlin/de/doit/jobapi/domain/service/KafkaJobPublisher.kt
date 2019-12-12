@@ -13,7 +13,7 @@ class KafkaJobPublisher(@Autowired private val kafkaTemplate: KafkaTemplate<Stri
                         @Value("\${japi.kafka.topic}") private val topic: String) : JobPublisher {
 
     override suspend fun publish(jobPostedEvent: JobPostedEvent): JobPostedEvent {
-        kafkaTemplate.send(topic, jobPostedEvent.getId(), jobPostedEvent).completable().await()
+        kafkaTemplate.send(topic, jobPostedEvent.getData().getId(), jobPostedEvent).completable().await()
         return jobPostedEvent
     }
 }

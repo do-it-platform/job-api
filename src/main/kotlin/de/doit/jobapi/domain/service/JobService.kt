@@ -11,23 +11,31 @@ class JobService(@Autowired private val jobPublisher: JobPublisher) {
     suspend fun add(vendorId: VendorId, job: JobData): JobDTO {
         val publishedEvent = jobPublisher.publish(
                 JobPostedEvent.newBuilder()
-                        .setId(UUID.randomUUID().toString())
-                        .setVendorId(vendorId.value)
-                        .setTitle(job.title)
-                        .setDescription(job.description)
-                        .setLocation(Location.newBuilder().setLatitude(job.latitude).setLongitude(job.longitude).build())
-                        .setPayment(job.payment)
+                        .setData(JobDataRecord.newBuilder()
+                                .setId(UUID.randomUUID().toString())
+                                .setVendorId(vendorId.value)
+                                .setTitle(job.title)
+                                .setDescription(job.description)
+                                .setLocation(Location.newBuilder()
+                                        .setLatitude(job.latitude)
+                                        .setLongitude(job.longitude)
+                                        .build())
+                                .setPayment(job.payment)
+                                .build()
+                        )
                         .build()
         )
 
-        return JobDTO(
-                JobId(publishedEvent.getId()),
-                publishedEvent.getTitle(),
-                publishedEvent.getDescription(),
-                publishedEvent.getLocation().getLatitude(),
-                publishedEvent.getLocation().getLongitude(),
-                publishedEvent.getPayment().toPlainString()
-        )
+        return publishedEvent.getData().let {
+            JobDTO(
+                    JobId(it.getId()),
+                    it.getTitle(),
+                    it.getDescription(),
+                    it.getLocation().getLatitude(),
+                    it.getLocation().getLongitude(),
+                    it.getPayment().toPlainString()
+            )
+        }
     }
 
 }

@@ -170,6 +170,9 @@
 							<goal>schema</goal>
 						</goals>
 						<configuration>
+							<imports>
+								<import>${project.basedir}/src/main/avro/JobDataRecord.avsc</import>
+							</imports>
 							<sourceDirectory>${project.basedir}/src/main/avro/</sourceDirectory>
 							<stringType>String</stringType>
 							<enableDecimalLogicalType>true</enableDecimalLogicalType>

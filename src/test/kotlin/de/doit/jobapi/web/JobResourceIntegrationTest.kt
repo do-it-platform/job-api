@@ -108,6 +108,90 @@ class JobResourceIntegrationTest {
             }
         }
 
+        @Nested
+        @DisplayName("PUT /jobs/{id}")
+        inner class PutJobs {
+
+            private var existingJobId: JobId? = null
+            private val userId = "1234"
+
+            @BeforeEach
+            internal fun setUp() {
+                val jobInputData = easyRandom.nextObject(JobData::class.java)
+
+                client.post()
+                        .uri("/jobs")
+                        .header("X-User-Id", userId)
+                        .contentType(APPLICATION_JSON)
+                        .bodyValue(jobInputData)
+                        .accept(APPLICATION_JSON)
+                        .exchange()
+                        .expectStatus().isOk
+                        .expectBody<JobDTO>()
+                        .consumeWith {
+                            existingJobId = it.responseBody!!.id
+                        }
+
+                consumeJobEvents()
+            }
+
+            @Test
+            @DisplayName("should return not found when given id not exists")
+            internal fun putJobsShouldReturnNotFoundIfGivenIdNotExists() {
+                val updatedJobData = easyRandom.nextObject(JobData::class.java)
+
+                client.put()
+                        .uri("/jobs/{id}", "not-existing-id")
+                        .header("X-User-Id", userId)
+                        .contentType(APPLICATION_JSON)
+                        .bodyValue(updatedJobData)
+                        .accept(APPLICATION_JSON)
+                        .exchange()
+                        .expectStatus().isNotFound
+
+                assertThat(consumeJobEvents()).isEmpty()
+            }
+
+            @Test
+            @DisplayName("should publish job-updated event")
+            internal fun putJobsShouldPublishJobUpdatedEvent() {
+                val updatedJobData = easyRandom.nextObject(JobData::class.java)
+
+                client.put()
+                        .uri("/jobs/{id}", existingJobId?.value)
+                        .header("X-User-Id", userId)
+                        .contentType(APPLICATION_JSON)
+                        .bodyValue(updatedJobData)
+                        .accept(APPLICATION_JSON)
+                        .exchange()
+                        .expectStatus().isAccepted
+
+                val jobUpdatedEvent = consumeLastJobEvent()
+                assertThat(jobUpdatedEvent.key()).isEqualTo(existingJobId?.value)
+                assertThat(jobUpdatedEvent.value())
+                        .isInstanceOf(JobUpdatedEvent::class.java)
+                        .isEqualTo(jobUpdatedEvent(updatedJobData, existingJobId!!, userId))
+            }
+
+            @Test
+            @DisplayName("should return forbidden when given id does not belong to user")
+            internal fun putJobsShouldReturnForbiddenWhenGivenIdNotBelongsToUser() {
+                val updatedJobData = easyRandom.nextObject(JobData::class.java)
+
+                client.put()
+                        .uri("/jobs/{id}", existingJobId?.value)
+                        .header("X-User-Id", "foreign-user-id")
+                        .contentType(APPLICATION_JSON)
+                        .bodyValue(updatedJobData)
+                        .accept(APPLICATION_JSON)
+                        .exchange()
+                        .expectStatus().isForbidden
+
+                assertThat(consumeJobEvents()).isEmpty()
+            }
+
+        }
+
         private fun consumeJobEvents(): ConsumerRecords<String, GenericRecord> {
             return KafkaTestUtils.getRecords(jobEventConsumer, Duration.ofSeconds(2).toMillis())
         }
@@ -159,7 +243,18 @@ class JobResourceIntegrationTest {
 
     private fun jobPostedEvent(jobInputData: JobData, jobId: JobId, userId: String): JobPostedEvent {
         return JobPostedEvent.newBuilder()
-                .setId(jobId.value)
+                .setData(jobDataRecord(jobInputData, jobId, userId))
+                .build()
+    }
+
+    private fun jobUpdatedEvent(jobInputData: JobData, jobId: JobId, userId: String): JobUpdatedEvent {
+        return JobUpdatedEvent.newBuilder()
+                .setData(jobDataRecord(jobInputData, jobId, userId))
+                .build()
+    }
+
+    private fun jobDataRecord(jobInputData: JobData, jobId: JobId, userId: String): JobDataRecord {
+        return JobDataRecord.newBuilder().setId(jobId.value)
                 .setTitle(jobInputData.title)
                 .setDescription(jobInputData.description)
                 .setLocation(Location.newBuilder()

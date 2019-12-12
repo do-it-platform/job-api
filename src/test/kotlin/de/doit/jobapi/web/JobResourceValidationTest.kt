@@ -123,4 +123,123 @@ class JobResourceValidationTest(@Autowired private val client: WebTestClient,
 
     }
 
+    @Nested
+    @DisplayName("PUT /jobs/{id}")
+    inner class PutJobs {
+
+        @EmptySource
+        @ValueSource(strings = ["    "])
+        @DisplayName("with invalid title should return bad request")
+        @ParameterizedTest(name = "title = \"{0}\"")
+        fun putJobWithMissingTitleShouldReturnBadRequest(title: String) {
+            val jobInputData = easyRandom.nextObject(JobData::class.java).copy(title = title)
+
+            client.put()
+                    .uri("/jobs/{id}", "1234")
+                    .header("X-User-Id", "1234")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(jobInputData)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchange()
+                    .expectStatus().isBadRequest
+        }
+
+        @EmptySource
+        @ValueSource(strings = ["    "])
+        @DisplayName("with invalid description should return bad request")
+        @ParameterizedTest(name = "description = \"{0}\"")
+        fun putJobWithMissingDescriptionShouldReturnBadRequest(desc: String) {
+            val jobInputData = easyRandom.nextObject(JobData::class.java).copy(description = desc)
+
+            client.put()
+                    .uri("/jobs/{id}", "1234")
+                    .header("X-User-Id", "1234")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(jobInputData)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchange()
+                    .expectStatus().isBadRequest
+        }
+
+        @ValueSource(doubles = [-3.00])
+        @DisplayName("with invalid payment should return bad request")
+        @ParameterizedTest(name = "payment = {0}")
+        fun putJobWithInvalidPaymentShouldReturnBadRequest(payment: Double) {
+            val jobInputData = easyRandom.nextObject(JobData::class.java).copy(payment = payment.toBigDecimal())
+
+            client.put()
+                    .uri("/jobs/{id}", "1234")
+                    .header("X-User-Id", "1234")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(jobInputData)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchange()
+                    .expectStatus().isBadRequest
+        }
+
+        @ValueSource(doubles = [-91.00, 91.00])
+        @DisplayName("with invalid latitude should return bad request")
+        @ParameterizedTest(name = "latitude = {0}")
+        fun putJobWithInvalidLatitudeShouldReturnBadRequest(latitude: Double) {
+            val jobInputData = easyRandom.nextObject(JobData::class.java).copy(latitude = latitude)
+
+            client.put()
+                    .uri("/jobs/{id}", "1234")
+                    .header("X-User-Id", "1234")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(jobInputData)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchange()
+                    .expectStatus().isBadRequest
+        }
+
+        @ValueSource(doubles = [-181.00, 181.00])
+        @DisplayName("with invalid longitude should return bad request")
+        @ParameterizedTest(name = "longitude = {0}")
+        fun putJobWithInvalidLongitudeShouldReturnBadRequest(longitude: Double) {
+            val jobInputData = easyRandom.nextObject(JobData::class.java).copy(longitude = longitude)
+
+            client.put()
+                    .uri("/jobs/{id}", "1234")
+                    .header("X-User-Id", "1234")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(jobInputData)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchange()
+                    .expectStatus().isBadRequest
+        }
+
+        @NullAndEmptySource
+        @ValueSource(strings = ["    "])
+        @DisplayName("with invalid X-User-Id header should return bad request")
+        @ParameterizedTest(name = "X-User-Id({0})")
+        fun putJobWithMissingUserIdShouldReturnBadRequest(userId: String?) {
+            client.put()
+                    .uri("/jobs/{id}", "1234")
+                    .header("X-User-Id", userId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(easyRandom.nextObject(JobData::class.java))
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchange()
+                    .expectStatus().isBadRequest
+        }
+
+        @NullAndEmptySource
+        @ValueSource(strings = ["    "])
+        @DisplayName("with invalid JobId should return bad request")
+        @ParameterizedTest(name = "JobId({0})")
+        fun putJobWithMissingIdShouldReturnBadRequest(id: String?) {
+            client.put()
+                    .uri("/jobs/{id}", id)
+                    .header("X-User-Id", "1234")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(easyRandom.nextObject(JobData::class.java))
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchange()
+                    .expectStatus().isBadRequest
+        }
+
+    }
+
+
 }

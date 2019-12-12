@@ -1,6 +1,6 @@
 {
   "type": "record",
-  "name": "JobPostedEvent",
+  "name": "JobUpdatedEvent",
   "namespace": "de.doit.jobapi.domain.model",
   "fields": [
     {
