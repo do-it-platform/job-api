@@ -1,14 +1,12 @@
 package de.doit.jobapi.web
 
-import de.doit.jobapi.domain.model.JobDTO
-import de.doit.jobapi.domain.model.JobData
-import de.doit.jobapi.domain.model.JobId
-import de.doit.jobapi.domain.model.VendorId
+import de.doit.jobapi.domain.model.*
 import de.doit.jobapi.domain.service.JobService
 import kotlinx.coroutines.reactor.mono
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus.*
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
+import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
@@ -27,21 +25,38 @@ class JobResource(@Autowired private val jobService: JobService) {
     @PostMapping(consumes = [APPLICATION_JSON_VALUE], produces = [APPLICATION_JSON_VALUE])
     fun add(@RequestHeader("X-User-Id") @NotBlank vendorId: VendorId,
             @RequestBody @Valid data: JobData): Mono<JobDTO> {
-        return mono { jobService.add(vendorId, data) }
+        return mono { toDTO(jobService.add(vendorId, data)) }
     }
 
-    @ResponseStatus(NO_CONTENT)
     @PutMapping("/{id}", consumes = [APPLICATION_JSON_VALUE], produces = [APPLICATION_JSON_VALUE])
     fun update(@PathVariable @NotBlank id: JobId,
                @RequestHeader("X-User-Id") @NotBlank vendorId: VendorId,
-               @RequestBody @Valid data: JobData): Mono<Void> {
+               @RequestBody @Valid data: JobData): Mono<ResponseEntity<Void>> {
         // for some reason Mono<Unit> return empty object -> {} instead empty response body
-        return mono { jobService.update(id, vendorId, data) }.then()
+        return mono { jobService.update(id, vendorId, data) }
+                .map { ResponseEntity.noContent().build<Void>() }
+                .onErrorReturn({ it is IllegalAccessError }, ResponseEntity.status(FORBIDDEN).build())
+                .defaultIfEmpty(ResponseEntity.notFound().build<Void>())
     }
 
     @ExceptionHandler(ConstraintViolationException::class)
     fun handleConstraintViolationException(e: ConstraintViolationException) {
         throw ResponseStatusException(BAD_REQUEST, e.message, e)
+    }
+
+    companion object {
+
+        private fun toDTO(job: Job): JobDTO {
+            return JobDTO(
+                    job.id,
+                    job.title,
+                    job.description,
+                    job.latitude,
+                    job.longitude,
+                    job.payment.toPlainString()
+            )
+        }
+
     }
 
 }

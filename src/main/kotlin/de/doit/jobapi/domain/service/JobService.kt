@@ -6,14 +6,15 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class JobService internal constructor(@Autowired private val jobEventPublisher: JobEventPublisher) {
+class JobService internal constructor(@Autowired private val jobEventPublisher: JobEventPublisher,
+                                      @Autowired private val jobQueryService: JobQueryService) {
 
     companion object {
 
-        private fun toJobDataRecord(jobId: JobId, vendorId: VendorId, job: JobData): JobDataRecord {
+        private fun toJobDataRecord(job: Job): JobDataRecord {
             return JobDataRecord.newBuilder()
-                    .setId(jobId.value)
-                    .setVendorId(vendorId.value)
+                    .setId(job.id.value)
+                    .setVendorId(job.vendorId.value)
                     .setTitle(job.title)
                     .setDescription(job.description)
                     .setLocation(Location.newBuilder()
@@ -24,34 +25,47 @@ class JobService internal constructor(@Autowired private val jobEventPublisher: 
                     .build()
         }
 
-        private fun toDTO(jobDataRecord: JobDataRecord): JobDTO {
-            return JobDTO(
-                    JobId(jobDataRecord.getId()),
-                    jobDataRecord.getTitle(),
-                    jobDataRecord.getDescription(),
-                    jobDataRecord.getLocation().getLatitude(),
-                    jobDataRecord.getLocation().getLongitude(),
-                    jobDataRecord.getPayment().toPlainString()
+        private fun createJob(jobId: JobId, vendorId: VendorId, jobData: JobData): Job {
+            return Job(
+                    jobId,
+                    vendorId,
+                    jobData.title,
+                    jobData.description,
+                    jobData.latitude,
+                    jobData.longitude,
+                    jobData.payment
             )
         }
 
     }
 
-    suspend fun add(vendorId: VendorId, job: JobData): JobDTO {
+    suspend fun add(vendorId: VendorId, jobData: JobData): Job {
         val jobId = JobId(UUID.randomUUID().toString())
+        val job = createJob(jobId, vendorId, jobData)
+
         val jobPostedEvent = JobPostedEvent.newBuilder()
-                .setData(toJobDataRecord(jobId, vendorId, job))
+                .setData(toJobDataRecord(job))
                 .build()
+
         jobEventPublisher.publish(jobId, jobPostedEvent)
 
-        return toDTO(jobPostedEvent.getData())
+        return job
     }
 
-    suspend fun update(jobId: JobId, vendorId: VendorId, job: JobData) {
-        val jobUpdatedEvent = JobUpdatedEvent.newBuilder()
-                .setData(toJobDataRecord(jobId, vendorId, job))
-                .build()
-        jobEventPublisher.publish(jobId, jobUpdatedEvent)
+    suspend fun update(jobId: JobId, vendorId: VendorId, jobData: JobData): Job? {
+        return jobQueryService.findById(jobId)
+                ?.also { if (it.vendorId != vendorId) throw IllegalAccessError() }
+                ?.run {
+                    val updatedJob = createJob(jobId, vendorId, jobData)
+
+                    val jobUpdatedEvent = JobUpdatedEvent.newBuilder()
+                            .setData(toJobDataRecord(updatedJob))
+                            .build()
+
+                    jobEventPublisher.publish(jobId, jobUpdatedEvent)
+
+                    return updatedJob
+                }
     }
 
 }

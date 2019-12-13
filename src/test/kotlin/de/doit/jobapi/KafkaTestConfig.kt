@@ -2,6 +2,8 @@ package de.doit.jobapi
 
 import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.VALUE_SUBJECT_NAME_STRATEGY
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde
@@ -13,6 +15,7 @@ import org.apache.kafka.common.serialization.StringSerializer
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.core.*
 
@@ -42,13 +45,15 @@ class KafkaTestConfig(private val props: KafkaProperties) {
     }
 
     @Bean
+    @Primary
     fun genericAvroSerde(): GenericAvroSerde {
         val genericAvroSerde = GenericAvroSerde(schemaRegistryClient())
         genericAvroSerde.configure(mapOf(
                 KafkaAvroSerializerConfig.AUTO_REGISTER_SCHEMAS to true,
                 KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG to "http://mock:8081",
                 KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG to true,
-                KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG to "http://mock:8081"
+                KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG to "http://mock:8081",
+                VALUE_SUBJECT_NAME_STRATEGY to props.properties[VALUE_SUBJECT_NAME_STRATEGY]
         ), false)
         return genericAvroSerde
     }

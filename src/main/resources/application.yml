@@ -1,8 +1,11 @@
 spring:
+  application:
+    name: japi
   kafka:
     bootstrap-servers: localhost:9092
     properties:
       schema.registry.url: http://localhost:8081
+      value.subject.name.strategy: io.confluent.kafka.serializers.subject.TopicRecordNameStrategy
     producer:
       client-id: japi-producer
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -11,3 +14,5 @@ spring:
 japi:
   kafka:
     topic: job-log
+    numberOfPartitions: 1
+    replicationFactor: 1

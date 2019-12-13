@@ -22,7 +22,7 @@ import org.springframework.kafka.test.context.EmbeddedKafka
 import org.springframework.kafka.test.utils.KafkaTestUtils
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
-import java.time.Duration
+import java.time.Duration.ofSeconds
 
 @AutoConfigureWebTestClient
 @SpringBootTest(webEnvironment = RANDOM_PORT, properties = ["spring.kafka.bootstrap-servers=\${spring.embedded.kafka.brokers}"])
@@ -112,8 +112,8 @@ class JobResourceIntegrationTest {
         @DisplayName("PUT /jobs/{id}")
         inner class PutJobs {
 
-            private var existingJobId: JobId? = null
             private val userId = "1234"
+            private var existingJobId: JobId? = null
 
             @BeforeEach
             internal fun setUp() {
@@ -194,7 +194,7 @@ class JobResourceIntegrationTest {
         }
 
         private fun consumeJobEvents(): ConsumerRecords<String, GenericRecord> {
-            return KafkaTestUtils.getRecords(jobEventConsumer, Duration.ofSeconds(2).toMillis())
+            return KafkaTestUtils.getRecords(jobEventConsumer, ofSeconds(2).toMillis())
         }
 
         private fun consumeLastJobEvent(): ConsumerRecord<String, GenericRecord> {
@@ -210,8 +210,15 @@ class JobResourceIntegrationTest {
     @TestInstance(PER_CLASS)
     inner class WithoutKafkaAvailable {
 
+        private lateinit var existingJobId: String
+
         @BeforeAll
         internal fun setUp() {
+            val jobEventConsumer = jobEventConsumerFactory.createConsumer("test-group-2", null)
+            kafkaBroker.consumeFromAnEmbeddedTopic(jobEventConsumer, topic)
+            existingJobId = KafkaTestUtils.getRecords(jobEventConsumer, ofSeconds(2).toMillis()).last().key()
+            jobEventConsumer.close()
+
             kafkaBroker.kafkaServers.forEach {
                 it.shutdown()
                 it.awaitShutdown()
@@ -249,7 +256,7 @@ class JobResourceIntegrationTest {
                 val jobUpdateData = easyRandom.nextObject(JobData::class.java)
 
                 client.put()
-                        .uri("/jobs/{id}", "43453")
+                        .uri("/jobs/{id}", existingJobId)
                         .header("X-User-Id", "1234")
                         .contentType(APPLICATION_JSON)
                         .bodyValue(jobUpdateData)
@@ -261,7 +268,6 @@ class JobResourceIntegrationTest {
         }
 
     }
-
 
     private fun jobPostedEvent(jobInputData: JobData, jobId: JobId, userId: String): JobPostedEvent {
         return JobPostedEvent.newBuilder()

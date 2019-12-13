@@ -5,16 +5,15 @@ import kotlinx.coroutines.future.await
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 
 @Component
 internal class KafkaJobEventPublisher(@Autowired private val kafkaTemplate: KafkaTemplate<String, GenericRecord>,
-                                      @Value("\${japi.kafka.topic}") private val topic: String) : JobEventPublisher {
+                                      @Autowired private val kafkaConfigProperties: KafkaConfigProperties) : JobEventPublisher {
 
     override suspend fun <T: SpecificRecordBase> publish(jobId: JobId, jobEvent: T): T {
-        kafkaTemplate.send(topic, jobId.value, jobEvent).completable().await()
+        kafkaTemplate.send(kafkaConfigProperties.topic, jobId.value, jobEvent).completable().await()
         return jobEvent
     }
 }
