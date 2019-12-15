@@ -35,10 +35,6 @@ internal class KafkaJobQueryService(@Autowired private val streamsFactoryBean: S
     override suspend fun findById(id: JobId): Job? {
         return withContext(Dispatchers.Default) {
             jobLogTableStore.get(id.value)?.let {
-                println(it::class)
-                println(it.javaClass)
-                println(it is JobPostedEvent)
-                println(JobPostedEvent::class.isInstance(it))
                 when (it) {
                     is JobPostedEvent -> toJob(it.getData())
                     is JobUpdatedEvent -> toJob(it.getData())
