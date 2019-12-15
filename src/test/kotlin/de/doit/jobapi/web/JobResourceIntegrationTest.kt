@@ -1,14 +1,15 @@
 package de.doit.jobapi.web
 
-import de.doit.jobapi.domain.event.JobDataRecord
 import de.doit.jobapi.domain.event.JobPostedEvent
 import de.doit.jobapi.domain.event.JobUpdatedEvent
-import de.doit.jobapi.domain.model.*
+import de.doit.jobapi.domain.model.JobDTO
+import de.doit.jobapi.domain.model.JobData
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.assertj.core.api.ObjectAssert
 import org.jeasy.random.EasyRandom
 import org.junit.jupiter.api.*
@@ -26,6 +27,8 @@ import org.springframework.kafka.test.utils.KafkaTestUtils
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import java.time.Duration.ofSeconds
+import java.time.Instant
+import java.time.temporal.ChronoUnit.MILLIS
 
 @AutoConfigureWebTestClient
 @SpringBootTest(webEnvironment = RANDOM_PORT, properties = ["spring.kafka.bootstrap-servers=\${spring.embedded.kafka.brokers}"])
@@ -80,9 +83,18 @@ class JobResourceIntegrationTest {
                             assertThat(jobOutputData).isNotNull
                             val jobPostedEvent = consumeLastJobEvent()
                             assertThat(jobPostedEvent.key()).isEqualTo(jobOutputData!!.id.value)
-                            assertThat(jobPostedEvent.value())
-                                    .isInstanceOf(JobPostedEvent::class.java)
-                                    .isEqualTo(jobPostedEvent(jobInputData, jobOutputData.id, userId))
+                            assertThat(jobPostedEvent.value()).isInstanceOf(JobPostedEvent::class.java)
+                            with((jobPostedEvent.value() as JobPostedEvent).getData()) {
+                                assertThat(getId()).isEqualTo(jobOutputData.id.value)
+                                assertThat(getVendorId()).isEqualTo(userId)
+                                assertThat(getCreatedAt()).isCloseTo(Instant.now(), within(500, MILLIS))
+                                assertThat(getModifiedAt()).isNull()
+                                assertThat(getTitle()).isEqualTo(jobInputData.title)
+                                assertThat(getDescription()).isEqualTo(jobInputData.description)
+                                assertThat(getLocation().getLatitude()).isEqualTo(jobInputData.latitude)
+                                assertThat(getLocation().getLongitude()).isEqualTo(jobInputData.longitude)
+                                assertThat(getPayment()).isEqualTo(jobInputData.payment)
+                            }
                         }
             }
 
@@ -116,7 +128,7 @@ class JobResourceIntegrationTest {
         inner class PutJobs {
 
             private val userId = "1234"
-            private var existingJobId: JobId? = null
+            private var jobPostedEvent: JobPostedEvent? = null
 
             @BeforeEach
             internal fun setUp() {
@@ -130,12 +142,8 @@ class JobResourceIntegrationTest {
                         .accept(APPLICATION_JSON)
                         .exchange()
                         .expectStatus().isCreated
-                        .expectBody<JobDTO>()
-                        .consumeWith {
-                            existingJobId = it.responseBody!!.id
-                        }
 
-                consumeJobEvents()
+                jobPostedEvent = consumeLastJobEvent().value() as JobPostedEvent
             }
 
             @Test
@@ -159,9 +167,10 @@ class JobResourceIntegrationTest {
             @DisplayName("should publish job-updated event")
             internal fun putJobsShouldPublishJobUpdatedEvent() {
                 val updatedJobData = easyRandom.nextObject(JobData::class.java)
+                val jobToUpdate = jobPostedEvent!!.getData()
 
                 client.put()
-                        .uri("/jobs/{id}", existingJobId?.value)
+                        .uri("/jobs/{id}", jobToUpdate.getId())
                         .header("X-User-Id", userId)
                         .contentType(APPLICATION_JSON)
                         .bodyValue(updatedJobData)
@@ -171,19 +180,29 @@ class JobResourceIntegrationTest {
                         .expectBody().isEmpty
 
                 val jobUpdatedEvent = consumeLastJobEvent()
-                assertThat(jobUpdatedEvent.key()).isEqualTo(existingJobId?.value)
-                assertThat(jobUpdatedEvent.value())
-                        .isInstanceOf(JobUpdatedEvent::class.java)
-                        .isEqualTo(jobUpdatedEvent(updatedJobData, existingJobId!!, userId))
+                assertThat(jobUpdatedEvent.key()).isEqualTo(jobToUpdate.getId())
+                assertThat(jobUpdatedEvent.value()).isInstanceOf(JobUpdatedEvent::class.java)
+                with((jobUpdatedEvent.value() as JobUpdatedEvent).getData()) {
+                    assertThat(getId()).isEqualTo(jobToUpdate.getId())
+                    assertThat(getVendorId()).isEqualTo(userId)
+                    assertThat(getCreatedAt()).isEqualTo(jobToUpdate.getCreatedAt())
+                    assertThat(getModifiedAt()).isCloseTo(Instant.now(), within(500, MILLIS))
+                    assertThat(getTitle()).isEqualTo(updatedJobData.title)
+                    assertThat(getDescription()).isEqualTo(updatedJobData.description)
+                    assertThat(getLocation().getLatitude()).isEqualTo(updatedJobData.latitude)
+                    assertThat(getLocation().getLongitude()).isEqualTo(updatedJobData.longitude)
+                    assertThat(getPayment()).isEqualTo(updatedJobData.payment)
+                }
             }
 
             @Test
             @DisplayName("should return forbidden when given id does not belong to user")
             internal fun putJobsShouldReturnForbiddenWhenGivenIdNotBelongsToUser() {
                 val updatedJobData = easyRandom.nextObject(JobData::class.java)
+                val jobToUpdate = jobPostedEvent!!.getData()
 
                 client.put()
-                        .uri("/jobs/{id}", existingJobId?.value)
+                        .uri("/jobs/{id}", jobToUpdate.getId())
                         .header("X-User-Id", "foreign-user-id")
                         .contentType(APPLICATION_JSON)
                         .bodyValue(updatedJobData)
@@ -270,32 +289,6 @@ class JobResourceIntegrationTest {
 
         }
 
-    }
-
-    private fun jobPostedEvent(jobInputData: JobData, jobId: JobId, userId: String): JobPostedEvent {
-        return JobPostedEvent.newBuilder()
-                .setData(jobDataRecord(jobInputData, jobId, userId))
-                .build()
-    }
-
-    private fun jobUpdatedEvent(jobInputData: JobData, jobId: JobId, userId: String): JobUpdatedEvent {
-        return JobUpdatedEvent.newBuilder()
-                .setData(jobDataRecord(jobInputData, jobId, userId))
-                .build()
-    }
-
-    private fun jobDataRecord(jobInputData: JobData, jobId: JobId, userId: String): JobDataRecord {
-        return JobDataRecord.newBuilder().setId(jobId.value)
-                .setTitle(jobInputData.title)
-                .setDescription(jobInputData.description)
-                .setLocation(Location.newBuilder()
-                        .setLatitude(jobInputData.latitude)
-                        .setLongitude(jobInputData.longitude)
-                        .build()
-                )
-                .setPayment(jobInputData.payment)
-                .setVendorId(userId)
-                .build()
     }
 
     private fun ObjectAssert<JobDTO>.containsValuesOf(jobData: JobData) {
