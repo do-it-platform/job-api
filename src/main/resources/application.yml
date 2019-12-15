@@ -2,6 +2,10 @@ spring:
   application:
     name: japi
   kafka:
+    streams:
+      properties:
+        default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+        default.value.serde: io.confluent.kafka.streams.serdes.avro.GenericAvroSerde
     bootstrap-servers: localhost:9092
     properties:
       schema.registry.url: http://localhost:8081
