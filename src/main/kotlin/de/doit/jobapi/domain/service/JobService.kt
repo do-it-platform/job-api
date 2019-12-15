@@ -3,6 +3,7 @@ package de.doit.jobapi.domain.service
 import de.doit.jobapi.domain.event.JobDataRecord
 import de.doit.jobapi.domain.event.JobPostedEvent
 import de.doit.jobapi.domain.event.JobUpdatedEvent
+import de.doit.jobapi.domain.event.Location
 import de.doit.jobapi.domain.model.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service

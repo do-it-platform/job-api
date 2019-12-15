@@ -48,7 +48,7 @@
       "type": {
         "name": "Location",
         "type": "record",
-        "namespace": "de.doit.jobapi.domain.model",
+        "namespace": "de.doit.jobapi.domain.event",
         "fields": [
           {
             "name": "latitude",
