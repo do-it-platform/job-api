@@ -1,7 +1,7 @@
 {
   "type": "record",
   "name": "JobDataRecord",
-  "namespace": "de.doit.jobapi.domain.model",
+  "namespace": "de.doit.jobapi.domain.event",
   "fields": [
     {
       "name": "id",

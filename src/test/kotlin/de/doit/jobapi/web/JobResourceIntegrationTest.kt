@@ -1,5 +1,8 @@
 package de.doit.jobapi.web
 
+import de.doit.jobapi.domain.event.JobDataRecord
+import de.doit.jobapi.domain.event.JobPostedEvent
+import de.doit.jobapi.domain.event.JobUpdatedEvent
 import de.doit.jobapi.domain.model.*
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.consumer.Consumer

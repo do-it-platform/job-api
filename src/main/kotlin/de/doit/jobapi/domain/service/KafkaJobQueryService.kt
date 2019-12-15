@@ -1,5 +1,8 @@
 package de.doit.jobapi.domain.service
 
+import de.doit.jobapi.domain.event.JobDataRecord
+import de.doit.jobapi.domain.event.JobPostedEvent
+import de.doit.jobapi.domain.event.JobUpdatedEvent
 import de.doit.jobapi.domain.model.*
 import de.doit.jobapi.domain.service.KafkaStreamsConfig.Companion.JOB_LOG_TABLE_STORE_NAME
 import kotlinx.coroutines.Dispatchers

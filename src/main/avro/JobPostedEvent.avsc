@@ -1,11 +1,11 @@
 {
   "type": "record",
   "name": "JobPostedEvent",
-  "namespace": "de.doit.jobapi.domain.model",
+  "namespace": "de.doit.jobapi.domain.event",
   "fields": [
     {
       "name": "data",
-      "type": "de.doit.jobapi.domain.model.JobDataRecord"
+      "type": "de.doit.jobapi.domain.event.JobDataRecord"
     }
   ]
 }
