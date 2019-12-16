@@ -19,19 +19,27 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.annotation.Bean
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.test.EmbeddedKafkaBroker
 import org.springframework.kafka.test.context.EmbeddedKafka
 import org.springframework.kafka.test.utils.KafkaTestUtils
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
+import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.wait.strategy.Wait
 import java.time.Duration.ofSeconds
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.time.temporal.ChronoUnit.MILLIS
+import java.time.temporal.ChronoUnit.SECONDS
 
+@ActiveProfiles("test")
 @AutoConfigureWebTestClient
-@SpringBootTest(webEnvironment = RANDOM_PORT, properties = ["spring.kafka.bootstrap-servers=\${spring.embedded.kafka.brokers}"])
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 @EmbeddedKafka(topics = ["\${japi.kafka.topic}"])
 class JobResourceIntegrationTest {
 
@@ -39,6 +47,7 @@ class JobResourceIntegrationTest {
     @Autowired lateinit var easyRandom: EasyRandom
     @Autowired lateinit var kafkaBroker: EmbeddedKafkaBroker
     @Autowired lateinit var jobEventConsumerFactory: ConsumerFactory<String, GenericRecord>
+    @Autowired lateinit var schemaRegistryContainer: GenericContainer<*>
     @Value("\${japi.kafka.topic}") private lateinit var topic: String
 
     @Nested
@@ -87,7 +96,7 @@ class JobResourceIntegrationTest {
                             with((jobPostedEvent.value() as JobPostedEvent).getData()) {
                                 assertThat(getId()).isEqualTo(jobOutputData.id.value)
                                 assertThat(getVendorId()).isEqualTo(userId)
-                                assertThat(getCreatedAt()).isCloseTo(Instant.now(), within(500, MILLIS))
+                                assertThat(getCreatedAt()).isCloseTo(Instant.now(), within(3, SECONDS))
                                 assertThat(getModifiedAt()).isNull()
                                 assertThat(getTitle()).isEqualTo(jobInputData.title)
                                 assertThat(getDescription()).isEqualTo(jobInputData.description)
@@ -215,6 +224,77 @@ class JobResourceIntegrationTest {
 
         }
 
+        @Nested
+        @DisplayName("DELETE /jobs/{id}")
+        inner class DeleteJobs {
+
+            private val userId = "1234"
+            private var jobPostedEvent: JobPostedEvent? = null
+
+            @BeforeEach
+            internal fun setUp() {
+                val jobInputData = easyRandom.nextObject(JobData::class.java)
+
+                client.post()
+                        .uri("/jobs")
+                        .header("X-User-Id", userId)
+                        .contentType(APPLICATION_JSON)
+                        .bodyValue(jobInputData)
+                        .accept(APPLICATION_JSON)
+                        .exchange()
+                        .expectStatus().isCreated
+
+                jobPostedEvent = consumeLastJobEvent().value() as JobPostedEvent
+            }
+
+            @Test
+            @DisplayName("should return not found when given id not exists")
+            internal fun deleteJobsShouldReturnNotFoundIfGivenIdNotExists() {
+                client.delete()
+                        .uri("/jobs/{id}", "not-existing-id")
+                        .header("X-User-Id", userId)
+                        .accept(APPLICATION_JSON)
+                        .exchange()
+                        .expectStatus().isNotFound
+
+                assertThat(consumeJobEvents()).isEmpty()
+            }
+
+            @Test
+            @DisplayName("should publish tombstone for deletion")
+            internal fun deleteJobsShouldPublishDeleteEvent() {
+                val jobToDelete = jobPostedEvent!!.getData()
+
+                client.delete()
+                        .uri("/jobs/{id}", jobToDelete.getId())
+                        .header("X-User-Id", userId)
+                        .accept(APPLICATION_JSON)
+                        .exchange()
+                        .expectStatus().isNoContent
+                        .expectBody().isEmpty
+
+                val jobUpdatedEvent = consumeLastJobEvent()
+                assertThat(jobUpdatedEvent.key()).isEqualTo(jobToDelete.getId())
+                assertThat(jobUpdatedEvent.value()).isNull()
+            }
+
+            @Test
+            @DisplayName("should return forbidden when given id does not belong to user")
+            internal fun deleteJobsShouldReturnForbiddenWhenGivenIdNotBelongsToUser() {
+                val jobToDelete = jobPostedEvent!!.getData()
+
+                client.delete()
+                        .uri("/jobs/{id}", jobToDelete.getId())
+                        .header("X-User-Id", "foreign-user-id")
+                        .accept(APPLICATION_JSON)
+                        .exchange()
+                        .expectStatus().isForbidden
+
+                assertThat(consumeJobEvents()).isEmpty()
+            }
+
+        }
+
         private fun consumeJobEvents(): ConsumerRecords<String, GenericRecord> {
             return KafkaTestUtils.getRecords(jobEventConsumer, ofSeconds(2).toMillis())
         }
@@ -274,7 +354,7 @@ class JobResourceIntegrationTest {
 
             @Test
             @DisplayName("should return server error")
-            fun postJobShouldReturnErrorWhenKafkaIsNotAvailable() {
+            fun putJobShouldReturnErrorWhenKafkaIsNotAvailable() {
                 val jobUpdateData = easyRandom.nextObject(JobData::class.java)
 
                 client.put()
@@ -282,6 +362,23 @@ class JobResourceIntegrationTest {
                         .header("X-User-Id", "1234")
                         .contentType(APPLICATION_JSON)
                         .bodyValue(jobUpdateData)
+                        .accept(APPLICATION_JSON)
+                        .exchange()
+                        .expectStatus().is5xxServerError
+            }
+
+        }
+
+        @Nested
+        @DisplayName("DELETE /jobs/{id}")
+        inner class DeleteJobs {
+
+            @Test
+            @DisplayName("should return server error")
+            fun deleteJobShouldReturnErrorWhenKafkaIsNotAvailable() {
+                client.delete()
+                        .uri("/jobs/{id}", existingJobId)
+                        .header("X-User-Id", "1234")
                         .accept(APPLICATION_JSON)
                         .exchange()
                         .expectStatus().is5xxServerError

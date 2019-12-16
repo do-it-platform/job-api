@@ -1,4 +1,5 @@
 
 ## TODO
 
-* Delete event.. 
+* Delete event..
+* Remove createdAt, modifiedAt?

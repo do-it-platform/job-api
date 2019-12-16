@@ -1,0 +1,13 @@
+spring:
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers}
+    properties:
+      schema.registry.url: http://localhost:8082
+    producer:
+      properties:
+        max.block.ms: 2000
+        request.timeout.ms: 2000
+        delivery.timeout.ms: 2000
+    consumer:
+      properties:
+        auto.offset.reset: earliest
