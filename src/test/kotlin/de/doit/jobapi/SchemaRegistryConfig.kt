@@ -13,7 +13,7 @@ class SchemaRegistryConfig {
     fun schemaRegistryContainer(kafkaBroker: EmbeddedKafkaBroker): GenericContainer<*> {
         return GenericContainer<Nothing>("confluentinc/cp-schema-registry")
                 .apply {
-                    withEnv("SCHEMA_REGISTRY_LISTENERS", "http://0.0.0.0:8082")
+                    withEnv("SCHEMA_REGISTRY_LISTENERS", "http://0.0.0.0:8091")
                     withEnv("SCHEMA_REGISTRY_HOST_NAME", "schema-registry")
                     withEnv("SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL", kafkaBroker.zookeeperConnectionString)
                     withNetworkMode("host")

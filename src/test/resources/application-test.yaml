@@ -2,7 +2,7 @@ spring:
   kafka:
     bootstrap-servers: ${spring.embedded.kafka.brokers}
     properties:
-      schema.registry.url: http://localhost:8082
+      schema.registry.url: http://localhost:8091
     producer:
       properties:
         max.block.ms: 2000
