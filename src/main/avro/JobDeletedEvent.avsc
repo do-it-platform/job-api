@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "JobDeletedEvent",
+  "namespace": "de.doit.jobapi.domain.event",
+  "fields": []
+}

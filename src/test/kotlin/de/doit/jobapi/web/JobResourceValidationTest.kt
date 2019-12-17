@@ -1,11 +1,8 @@
 package de.doit.jobapi.web
 
 import de.doit.jobapi.domain.model.JobData
-import org.hamcrest.Matcher
-import org.hamcrest.Matchers
-import org.hamcrest.Matchers.*
-import org.hamcrest.core.AnyOf
-import org.hamcrest.core.IsEqual
+import org.hamcrest.Matchers.anyOf
+import org.hamcrest.Matchers.equalTo
 import org.jeasy.random.EasyRandom
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -17,11 +14,15 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
-import org.springframework.http.HttpStatus
-import org.springframework.http.HttpStatus.*
+import org.springframework.http.HttpStatus.BAD_REQUEST
+import org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED
 import org.springframework.http.MediaType
+import org.springframework.kafka.test.context.EmbeddedKafka
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 
+@EmbeddedKafka
+@ActiveProfiles("test")
 @AutoConfigureWebTestClient
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class JobResourceValidationTest(@Autowired private val client: WebTestClient,
@@ -248,5 +249,37 @@ class JobResourceValidationTest(@Autowired private val client: WebTestClient,
 
     }
 
+
+    @Nested
+    @DisplayName("DELETE /jobs/{id}")
+    inner class DeleteJobs {
+
+        @NullAndEmptySource
+        @ValueSource(strings = ["    "])
+        @DisplayName("with invalid X-User-Id header should return bad request")
+        @ParameterizedTest(name = "X-User-Id({0})")
+        fun deleteJobWithMissingUserIdShouldReturnBadRequest(userId: String?) {
+            client.delete()
+                    .uri("/jobs/{id}", "1234")
+                    .header("X-User-Id", userId)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchange()
+                    .expectStatus().isBadRequest
+        }
+
+        @NullAndEmptySource
+        @ValueSource(strings = ["    "])
+        @DisplayName("with invalid JobId should return bad request")
+        @ParameterizedTest(name = "JobId({0})")
+        fun deleteJobWithMissingIdShouldReturnBadRequest(id: String?) {
+            client.delete()
+                    .uri("/jobs/{id}", id)
+                    .header("X-User-Id", "1234")
+                    .accept(MediaType.APPLICATION_JSON)
+                    .exchange()
+                    .expectStatus().value(anyOf(equalTo(BAD_REQUEST.value()), equalTo(METHOD_NOT_ALLOWED.value())))
+        }
+
+    }
 
 }

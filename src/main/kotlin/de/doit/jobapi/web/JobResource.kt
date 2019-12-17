@@ -1,5 +1,6 @@
 package de.doit.jobapi.web
 
+import de.doit.jobapi.domain.exception.JobNotFoundException
 import de.doit.jobapi.domain.model.*
 import de.doit.jobapi.domain.service.JobService
 import kotlinx.coroutines.reactor.mono
@@ -35,13 +36,22 @@ class JobResource(@Autowired private val jobService: JobService) {
         // for some reason Mono<Unit> return empty object -> {} instead empty response body
         return mono { jobService.update(id, vendorId, data) }
                 .map { ResponseEntity.noContent().build<Void>() }
-                .onErrorReturn({ it is IllegalAccessError }, ResponseEntity.status(FORBIDDEN).build())
-                .defaultIfEmpty(ResponseEntity.notFound().build<Void>())
+                .onErrorReturn(JobNotFoundException::class.java, ResponseEntity.status(NOT_FOUND).build())
+                .onErrorReturn(IllegalAccessError::class.java, ResponseEntity.status(FORBIDDEN).build())
     }
 
     @ExceptionHandler(ConstraintViolationException::class)
     fun handleConstraintViolationException(e: ConstraintViolationException) {
         throw ResponseStatusException(BAD_REQUEST, e.message, e)
+    }
+
+    @DeleteMapping("/{id}", produces = [APPLICATION_JSON_VALUE])
+    fun delete(@PathVariable @NotBlank id: JobId,
+               @RequestHeader("X-User-Id") @NotBlank vendorId: VendorId): Mono<ResponseEntity<Void>> {
+        return mono { jobService.delete(id, vendorId) }
+                .map { ResponseEntity.noContent().build<Void>() }
+                .onErrorReturn(JobNotFoundException::class.java, ResponseEntity.status(NOT_FOUND).build())
+                .onErrorReturn(IllegalAccessError::class.java, ResponseEntity.status(FORBIDDEN).build())
     }
 
     companion object {

@@ -1,10 +1,11 @@
 package de.doit.jobapi.domain.service
 
-import de.doit.jobapi.domain.event.JobDataRecord
-import de.doit.jobapi.domain.event.JobPostedEvent
-import de.doit.jobapi.domain.event.JobUpdatedEvent
-import de.doit.jobapi.domain.event.Location
-import de.doit.jobapi.domain.model.*
+import de.doit.jobapi.domain.event.*
+import de.doit.jobapi.domain.exception.JobNotFoundException
+import de.doit.jobapi.domain.model.Job
+import de.doit.jobapi.domain.model.JobData
+import de.doit.jobapi.domain.model.JobId
+import de.doit.jobapi.domain.model.VendorId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.Instant
@@ -84,10 +85,11 @@ class JobService internal constructor(@Autowired private val jobEventPublisher: 
         return job
     }
 
-    suspend fun update(jobId: JobId, vendorId: VendorId, jobData: JobData): Job? {
+    suspend fun update(jobId: JobId, vendorId: VendorId, jobData: JobData): Job {
         return jobQueryService.findById(jobId)
-                ?.also { if (it.vendorId != vendorId) throw IllegalAccessError() }
-                ?.run {
+                .let { it ?: throw JobNotFoundException(jobId) }
+                .also { if (it.vendorId != vendorId) throw IllegalAccessError() }
+                .run {
                     val updatedJob = updatedJob(this, jobData)
 
                     val jobUpdatedEvent = JobUpdatedEvent.newBuilder()
@@ -98,6 +100,13 @@ class JobService internal constructor(@Autowired private val jobEventPublisher: 
 
                     return updatedJob
                 }
+    }
+
+    suspend fun delete(jobId: JobId, vendorId: VendorId) {
+        jobQueryService.findById(jobId)
+                .let { it ?: throw JobNotFoundException(jobId) }
+                .also { if (it.vendorId != vendorId) throw IllegalAccessError() }
+                .run { jobEventPublisher.publish(jobId, JobDeletedEvent()) }
     }
 
 }
