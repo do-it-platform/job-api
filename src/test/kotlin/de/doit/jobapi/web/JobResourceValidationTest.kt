@@ -18,10 +18,12 @@ import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED
 import org.springframework.http.MediaType
 import org.springframework.kafka.test.context.EmbeddedKafka
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 
 @EmbeddedKafka
+@DirtiesContext
 @ActiveProfiles("test")
 @AutoConfigureWebTestClient
 @SpringBootTest(webEnvironment = RANDOM_PORT)

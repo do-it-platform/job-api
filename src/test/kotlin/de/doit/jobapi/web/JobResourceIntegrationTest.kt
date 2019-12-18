@@ -27,6 +27,7 @@ import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.test.EmbeddedKafkaBroker
 import org.springframework.kafka.test.context.EmbeddedKafka
 import org.springframework.kafka.test.utils.KafkaTestUtils
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
@@ -35,6 +36,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit.MILLIS
 import java.time.temporal.ChronoUnit.SECONDS
 
+@DirtiesContext
 @ActiveProfiles("test")
 @AutoConfigureWebTestClient
 @Import(SchemaRegistryTestConfig::class)
@@ -357,10 +359,7 @@ class JobResourceIntegrationTest {
                         existingJobId = it.responseBody!!.id.value
                     }
 
-            kafkaBroker.kafkaServers.forEach {
-                it.shutdown()
-                it.awaitShutdown()
-            }
+            kafkaBroker.destroy()
         }
 
         @Nested

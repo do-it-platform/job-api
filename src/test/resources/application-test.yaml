@@ -11,3 +11,5 @@ spring:
     consumer:
       properties:
         auto.offset.reset: earliest
+    streams:
+      application-id: ${random.value} # to avoid state dir issues
