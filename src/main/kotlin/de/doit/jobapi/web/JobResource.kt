@@ -40,11 +40,6 @@ class JobResource(@Autowired private val jobService: JobService) {
                 .onErrorReturn(IllegalAccessError::class.java, ResponseEntity.status(FORBIDDEN).build())
     }
 
-    @ExceptionHandler(ConstraintViolationException::class)
-    fun handleConstraintViolationException(e: ConstraintViolationException) {
-        throw ResponseStatusException(BAD_REQUEST, e.message, e)
-    }
-
     @DeleteMapping("/{id}", produces = [APPLICATION_JSON_VALUE])
     fun delete(@PathVariable @NotBlank id: JobId,
                @RequestHeader("X-User-Id") @NotBlank vendorId: VendorId): Mono<ResponseEntity<Void>> {
@@ -52,6 +47,11 @@ class JobResource(@Autowired private val jobService: JobService) {
                 .map { ResponseEntity.noContent().build<Void>() }
                 .onErrorReturn(JobNotFoundException::class.java, ResponseEntity.status(NOT_FOUND).build())
                 .onErrorReturn(IllegalAccessError::class.java, ResponseEntity.status(FORBIDDEN).build())
+    }
+
+    @ExceptionHandler(ConstraintViolationException::class)
+    fun handleConstraintViolationException(e: ConstraintViolationException) {
+        throw ResponseStatusException(BAD_REQUEST, e.message, e)
     }
 
     companion object {
