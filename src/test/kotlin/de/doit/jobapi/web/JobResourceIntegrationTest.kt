@@ -11,7 +11,6 @@ import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.within
 import org.assertj.core.api.ObjectAssert
 import org.jeasy.random.EasyRandom
 import org.junit.jupiter.api.*
@@ -32,9 +31,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import java.time.Duration.ofSeconds
-import java.time.Instant
-import java.time.temporal.ChronoUnit.MILLIS
-import java.time.temporal.ChronoUnit.SECONDS
 
 @DirtiesContext
 @ActiveProfiles("test")
@@ -96,8 +92,6 @@ class JobResourceIntegrationTest {
                             with((jobPostedEvent.value() as JobPostedEvent).getData()) {
                                 assertThat(getId()).isEqualTo(jobOutputData.id.value)
                                 assertThat(getVendorId()).isEqualTo(userId)
-                                assertThat(getCreatedAt()).isCloseTo(Instant.now(), within(3, SECONDS))
-                                assertThat(getModifiedAt()).isNull()
                                 assertThat(getTitle()).isEqualTo(jobInputData.title)
                                 assertThat(getDescription()).isEqualTo(jobInputData.description)
                                 assertThat(getLocation().getLatitude()).isEqualTo(jobInputData.latitude)
@@ -194,8 +188,6 @@ class JobResourceIntegrationTest {
                 with((jobUpdatedEvent.value() as JobUpdatedEvent).getData()) {
                     assertThat(getId()).isEqualTo(jobToUpdate.getId())
                     assertThat(getVendorId()).isEqualTo(userId)
-                    assertThat(getCreatedAt()).isEqualTo(jobToUpdate.getCreatedAt())
-                    assertThat(getModifiedAt()).isCloseTo(Instant.now(), within(500, MILLIS))
                     assertThat(getTitle()).isEqualTo(updatedJobData.title)
                     assertThat(getDescription()).isEqualTo(updatedJobData.description)
                     assertThat(getLocation().getLatitude()).isEqualTo(updatedJobData.latitude)

@@ -8,7 +8,6 @@ import de.doit.jobapi.domain.model.JobId
 import de.doit.jobapi.domain.model.VendorId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.time.Instant
 import java.util.*
 
 @Service
@@ -21,8 +20,6 @@ class JobService internal constructor(@Autowired private val jobEventPublisher: 
             return JobDataRecord.newBuilder()
                     .setId(job.id.value)
                     .setVendorId(job.vendorId.value)
-                    .setCreatedAt(job.createdAt)
-                    .setModifiedAt(job.modifiedAt)
                     .setTitle(job.title)
                     .setDescription(job.description)
                     .setLocation(Location.newBuilder()
@@ -33,25 +30,10 @@ class JobService internal constructor(@Autowired private val jobEventPublisher: 
                     .build()
         }
 
-        private fun createJob(jobId: JobId, vendorId: VendorId, jobData: JobData): Job {
-            return job(
-                    jobId = jobId,
-                    vendorId = vendorId,
-                    createdAt = Instant.now(),
-                    jobData = jobData
-            )
-        }
-
-        private fun job(jobId: JobId,
-                        vendorId: VendorId,
-                        createdAt: Instant,
-                        modifiedAt: Instant? = null,
-                        jobData: JobData): Job {
+        private fun job(jobId: JobId, vendorId: VendorId, jobData: JobData): Job {
             return Job(
                     id = jobId,
                     vendorId = vendorId,
-                    createdAt = createdAt,
-                    modifiedAt = modifiedAt,
                     title = jobData.title,
                     description = jobData.description,
                     latitude = jobData.latitude,
@@ -60,21 +42,11 @@ class JobService internal constructor(@Autowired private val jobEventPublisher: 
             )
         }
 
-        private fun updatedJob(job: Job, jobData: JobData): Job {
-            return job(
-                    jobId = job.id,
-                    vendorId = job.vendorId,
-                    createdAt = job.createdAt,
-                    modifiedAt = Instant.now(),
-                    jobData = jobData
-            )
-        }
-
     }
 
     suspend fun add(vendorId: VendorId, jobData: JobData): Job {
         val jobId = JobId(UUID.randomUUID().toString())
-        val job = createJob(jobId, vendorId, jobData)
+        val job = job(jobId, vendorId, jobData)
 
         val jobPostedEvent = JobPostedEvent.newBuilder()
                 .setData(toJobDataRecord(job))
@@ -90,7 +62,7 @@ class JobService internal constructor(@Autowired private val jobEventPublisher: 
                 .let { it ?: throw JobNotFoundException(jobId) }
                 .also { if (it.vendorId != vendorId) throw IllegalAccessError() }
                 .run {
-                    val updatedJob = updatedJob(this, jobData)
+                    val updatedJob = job(jobId, vendorId, jobData)
 
                     val jobUpdatedEvent = JobUpdatedEvent.newBuilder()
                             .setData(toJobDataRecord(updatedJob))

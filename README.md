@@ -1,4 +1,6 @@
 
 ## TODO
 
-* Remove createdAt, modifiedAt?
+* multi-maven project
+** separate event module
+* optimize kafka settings
