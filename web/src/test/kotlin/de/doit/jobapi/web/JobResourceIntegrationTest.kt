@@ -4,8 +4,8 @@ import de.doit.jobapi.SchemaRegistryTestConfig
 import de.doit.jobapi.domain.event.JobDeletedEvent
 import de.doit.jobapi.domain.event.JobPostedEvent
 import de.doit.jobapi.domain.event.JobUpdatedEvent
-import de.doit.jobapi.domain.model.JobDTO
-import de.doit.jobapi.domain.model.JobData
+import de.doit.jobapi.web.model.JobRequest
+import de.doit.jobapi.web.model.JobResponse
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -13,7 +13,13 @@ import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.ObjectAssert
 import org.jeasy.random.EasyRandom
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -37,14 +43,14 @@ import java.time.Duration.ofSeconds
 @AutoConfigureWebTestClient
 @Import(SchemaRegistryTestConfig::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@EmbeddedKafka(topics = ["\${japi.kafka.topic}"])
+@EmbeddedKafka(topics = ["\${jobapi.kafka.topic}"])
 class JobResourceIntegrationTest {
 
     @Autowired lateinit var client: WebTestClient
     @Autowired lateinit var easyRandom: EasyRandom
     @Autowired lateinit var kafkaBroker: EmbeddedKafkaBroker
     @Autowired lateinit var jobEventConsumerFactory: ConsumerFactory<String, GenericRecord>
-    @Value("\${japi.kafka.topic}") private lateinit var topic: String
+    @Value("\${jobapi.kafka.topic}") private lateinit var topic: String
 
     @Nested
     @DisplayName("With kafka available")
@@ -72,7 +78,7 @@ class JobResourceIntegrationTest {
             @DisplayName("should publish job-posted event")
             fun postJobShouldPublishJobPostedEvent() {
                 val userId = "2342-56456"
-                val jobInputData = easyRandom.nextObject(JobData::class.java)
+                val jobInputData = easyRandom.nextObject(JobRequest::class.java)
 
                 client.post()
                         .uri("/jobs")
@@ -82,7 +88,7 @@ class JobResourceIntegrationTest {
                         .accept(APPLICATION_JSON)
                         .exchange()
                         .expectStatus().isCreated
-                        .expectBody<JobDTO>()
+                        .expectBody<JobResponse>()
                         .consumeWith {
                             val jobOutputData = it.responseBody
                             assertThat(jobOutputData).isNotNull
@@ -104,7 +110,7 @@ class JobResourceIntegrationTest {
             @Test
             @DisplayName("should return dto after success")
             fun postJobShouldReturnDtoAfterSuccessfullyPublishedEvent() {
-                val jobInputData = easyRandom.nextObject(JobData::class.java)
+                val jobInputData = easyRandom.nextObject(JobRequest::class.java)
 
                 client.post()
                         .uri("/jobs")
@@ -114,7 +120,7 @@ class JobResourceIntegrationTest {
                         .accept(APPLICATION_JSON)
                         .exchange()
                         .expectStatus().isCreated
-                        .expectBody<JobDTO>()
+                        .expectBody<JobResponse>()
                         .consumeWith {
                             val jobOutputData = it.responseBody
                             assertThat(jobOutputData).isNotNull
@@ -135,7 +141,7 @@ class JobResourceIntegrationTest {
 
             @BeforeEach
             internal fun setUp() {
-                val jobInputData = easyRandom.nextObject(JobData::class.java)
+                val jobInputData = easyRandom.nextObject(JobRequest::class.java)
 
                 client.post()
                         .uri("/jobs")
@@ -152,7 +158,7 @@ class JobResourceIntegrationTest {
             @Test
             @DisplayName("should return not found when given id not exists")
             internal fun putJobsShouldReturnNotFoundIfGivenIdNotExists() {
-                val updatedJobData = easyRandom.nextObject(JobData::class.java)
+                val updatedJobData = easyRandom.nextObject(JobRequest::class.java)
 
                 client.put()
                         .uri("/jobs/{id}", "not-existing-id")
@@ -169,7 +175,7 @@ class JobResourceIntegrationTest {
             @Test
             @DisplayName("should publish job-updated event")
             internal fun putJobsShouldPublishJobUpdatedEvent() {
-                val updatedJobData = easyRandom.nextObject(JobData::class.java)
+                val updatedJobData = easyRandom.nextObject(JobRequest::class.java)
                 val jobToUpdate = jobPostedEvent!!.getData()
 
                 client.put()
@@ -199,7 +205,7 @@ class JobResourceIntegrationTest {
             @Test
             @DisplayName("should return forbidden when given id does not belong to user")
             internal fun putJobsShouldReturnForbiddenWhenGivenIdNotBelongsToUser() {
-                val updatedJobData = easyRandom.nextObject(JobData::class.java)
+                val updatedJobData = easyRandom.nextObject(JobRequest::class.java)
                 val jobToUpdate = jobPostedEvent!!.getData()
 
                 client.put()
@@ -217,7 +223,7 @@ class JobResourceIntegrationTest {
             @Test
             @DisplayName("should return not found after delete")
             internal fun putJobsShouldReturnNotFoundAfterDelete() {
-                val updatedJobData = easyRandom.nextObject(JobData::class.java)
+                val updatedJobData = easyRandom.nextObject(JobRequest::class.java)
                 val jobToUpdate = jobPostedEvent!!.getData()
 
                 client.delete()
@@ -252,7 +258,7 @@ class JobResourceIntegrationTest {
 
             @BeforeEach
             internal fun setUp() {
-                val jobInputData = easyRandom.nextObject(JobData::class.java)
+                val jobInputData = easyRandom.nextObject(JobRequest::class.java)
 
                 client.post()
                         .uri("/jobs")
@@ -336,7 +342,7 @@ class JobResourceIntegrationTest {
 
         @BeforeAll
         internal fun setUp() {
-            val jobInputData = easyRandom.nextObject(JobData::class.java)
+            val jobInputData = easyRandom.nextObject(JobRequest::class.java)
 
             client.post()
                     .uri("/jobs")
@@ -346,7 +352,7 @@ class JobResourceIntegrationTest {
                     .accept(APPLICATION_JSON)
                     .exchange()
                     .expectStatus().isCreated
-                    .expectBody<JobDTO>()
+                    .expectBody<JobResponse>()
                     .consumeWith {
                         existingJobId = it.responseBody!!.id.value
                     }
@@ -361,7 +367,7 @@ class JobResourceIntegrationTest {
             @Test
             @DisplayName("should return server error")
             fun postJobShouldReturnErrorWhenKafkaIsNotAvailable() {
-                val jobInputData = easyRandom.nextObject(JobData::class.java)
+                val jobInputData = easyRandom.nextObject(JobRequest::class.java)
 
                 client.post()
                         .uri("/jobs")
@@ -382,7 +388,7 @@ class JobResourceIntegrationTest {
             @Test
             @DisplayName("should return server error")
             fun putJobShouldReturnErrorWhenKafkaIsNotAvailable() {
-                val jobUpdateData = easyRandom.nextObject(JobData::class.java)
+                val jobUpdateData = easyRandom.nextObject(JobRequest::class.java)
 
                 client.put()
                         .uri("/jobs/{id}", existingJobId)
@@ -415,7 +421,7 @@ class JobResourceIntegrationTest {
 
     }
 
-    private fun ObjectAssert<JobDTO>.containsValuesOf(jobData: JobData) {
+    private fun ObjectAssert<JobResponse>.containsValuesOf(jobData: JobRequest) {
         satisfies {
             it.apply {
                 assertThat(title).isEqualTo(jobData.title)

@@ -1,6 +1,6 @@
 spring:
   application:
-    name: japi
+    name: jobapi
   kafka:
     streams:
       properties:
@@ -12,14 +12,14 @@ spring:
       value.subject.name.strategy: io.confluent.kafka.serializers.subject.TopicRecordNameStrategy
       specific.avro.reader: true
     producer:
-      client-id: japi-producer
+      client-id: jobapi-producer
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
 ---
-japi:
+jobapi:
   kafka:
     topic: job-log
     numberOfPartitions: 1

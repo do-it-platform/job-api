@@ -1,14 +1,16 @@
 package de.doit.jobapi.domain.service
 
-import de.doit.jobapi.domain.event.*
+import de.doit.jobapi.domain.event.JobDataRecord
+import de.doit.jobapi.domain.event.JobDeletedEvent
+import de.doit.jobapi.domain.event.JobPostedEvent
+import de.doit.jobapi.domain.event.JobUpdatedEvent
+import de.doit.jobapi.domain.event.Location
 import de.doit.jobapi.domain.exception.JobNotFoundException
 import de.doit.jobapi.domain.model.Job
-import de.doit.jobapi.domain.model.JobData
 import de.doit.jobapi.domain.model.JobId
 import de.doit.jobapi.domain.model.VendorId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.*
 
 @Service
 class JobService internal constructor(@Autowired private val jobEventPublisher: JobEventPublisher,
@@ -30,47 +32,30 @@ class JobService internal constructor(@Autowired private val jobEventPublisher: 
                     .build()
         }
 
-        private fun job(jobId: JobId, vendorId: VendorId, jobData: JobData): Job {
-            return Job(
-                    id = jobId,
-                    vendorId = vendorId,
-                    title = jobData.title,
-                    description = jobData.description,
-                    latitude = jobData.latitude,
-                    longitude = jobData.longitude,
-                    payment = jobData.payment
-            )
-        }
-
     }
 
-    suspend fun add(vendorId: VendorId, jobData: JobData): Job {
-        val jobId = JobId(UUID.randomUUID().toString())
-        val job = job(jobId, vendorId, jobData)
-
+    suspend fun add(job: Job): Job {
         val jobPostedEvent = JobPostedEvent.newBuilder()
                 .setData(toJobDataRecord(job))
                 .build()
 
-        jobEventPublisher.publish(jobId, jobPostedEvent)
+        jobEventPublisher.publish(job.id, jobPostedEvent)
 
         return job
     }
 
-    suspend fun update(jobId: JobId, vendorId: VendorId, jobData: JobData): Job {
-        return jobQueryService.findById(jobId)
-                .let { it ?: throw JobNotFoundException(jobId) }
-                .also { if (it.vendorId != vendorId) throw IllegalAccessError() }
+    suspend fun update(job: Job): Job {
+        return jobQueryService.findById(job.id)
+                .let { it ?: throw JobNotFoundException(job.id) }
+                .also { if (it.vendorId != job.vendorId) throw IllegalAccessError() }
                 .run {
-                    val updatedJob = job(jobId, vendorId, jobData)
-
                     val jobUpdatedEvent = JobUpdatedEvent.newBuilder()
-                            .setData(toJobDataRecord(updatedJob))
+                            .setData(toJobDataRecord(job))
                             .build()
 
-                    jobEventPublisher.publish(jobId, jobUpdatedEvent)
+                    jobEventPublisher.publish(job.id, jobUpdatedEvent)
 
-                    return updatedJob
+                    return job
                 }
     }
 
