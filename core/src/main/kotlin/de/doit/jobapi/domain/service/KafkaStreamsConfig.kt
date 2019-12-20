@@ -8,12 +8,14 @@ import org.apache.kafka.streams.kstream.Initializer
 import org.apache.kafka.streams.kstream.KTable
 import org.apache.kafka.streams.kstream.Materialized
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.annotation.EnableKafkaStreams
 
 @Configuration
 @EnableKafkaStreams
+@EnableConfigurationProperties(KafkaConfigProperties::class)
 internal class KafkaStreamsConfig(@Autowired private val kafkaConfigProperties: KafkaConfigProperties) {
 
     companion object {
