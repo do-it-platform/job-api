@@ -4,7 +4,6 @@ import de.doit.jobapi.domain.event.JobDataRecord
 import de.doit.jobapi.domain.event.JobDeletedEvent
 import de.doit.jobapi.domain.event.JobPostedEvent
 import de.doit.jobapi.domain.event.JobUpdatedEvent
-import de.doit.jobapi.domain.event.Location
 import de.doit.jobapi.domain.exception.JobNotFoundException
 import de.doit.jobapi.domain.model.Job
 import de.doit.jobapi.domain.model.JobId
@@ -24,10 +23,8 @@ class JobService internal constructor(@Autowired private val jobEventPublisher: 
                     .setVendorId(job.vendorId.value)
                     .setTitle(job.title)
                     .setDescription(job.description)
-                    .setLocation(Location.newBuilder()
-                            .setLatitude(job.latitude)
-                            .setLongitude(job.longitude)
-                            .build())
+                    .setLatitude(job.latitude)
+                    .setLongitude(job.longitude)
                     .setPayment(job.payment)
                     .build()
         }

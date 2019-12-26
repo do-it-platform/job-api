@@ -100,8 +100,8 @@ class JobResourceIntegrationTest {
                                 assertThat(getVendorId()).isEqualTo(userId)
                                 assertThat(getTitle()).isEqualTo(jobInputData.title)
                                 assertThat(getDescription()).isEqualTo(jobInputData.description)
-                                assertThat(getLocation().getLatitude()).isEqualTo(jobInputData.latitude)
-                                assertThat(getLocation().getLongitude()).isEqualTo(jobInputData.longitude)
+                                assertThat(getLatitude()).isEqualTo(jobInputData.latitude)
+                                assertThat(getLongitude()).isEqualTo(jobInputData.longitude)
                                 assertThat(getPayment()).isEqualTo(jobInputData.payment)
                             }
                         }
@@ -196,8 +196,8 @@ class JobResourceIntegrationTest {
                     assertThat(getVendorId()).isEqualTo(userId)
                     assertThat(getTitle()).isEqualTo(updatedJobData.title)
                     assertThat(getDescription()).isEqualTo(updatedJobData.description)
-                    assertThat(getLocation().getLatitude()).isEqualTo(updatedJobData.latitude)
-                    assertThat(getLocation().getLongitude()).isEqualTo(updatedJobData.longitude)
+                    assertThat(getLatitude()).isEqualTo(updatedJobData.latitude)
+                    assertThat(getLongitude()).isEqualTo(updatedJobData.longitude)
                     assertThat(getPayment()).isEqualTo(updatedJobData.payment)
                 }
             }

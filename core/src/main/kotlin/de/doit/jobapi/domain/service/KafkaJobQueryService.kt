@@ -27,8 +27,8 @@ internal class KafkaJobQueryService(@Autowired private val streamsFactoryBean: S
                     VendorId(jobDataRecord.getVendorId()),
                     jobDataRecord.getTitle(),
                     jobDataRecord.getDescription(),
-                    jobDataRecord.getLocation().getLatitude(),
-                    jobDataRecord.getLocation().getLongitude(),
+                    jobDataRecord.getLatitude(),
+                    jobDataRecord.getLongitude(),
                     jobDataRecord.getPayment()
             )
         }

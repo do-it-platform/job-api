@@ -26,24 +26,14 @@
       "type": "string"
     },
     {
-      "name": "location",
-      "type": {
-        "name": "Location",
-        "type": "record",
-        "namespace": "de.doit.jobapi.domain.event",
-        "fields": [
-          {
-            "name": "latitude",
-            "type": "double",
-            "doc": "returns the latitude of the geo location"
-          },
-          {
-            "name": "longitude",
-            "type": "double",
-            "doc": "returns the longitude of the geo location"
-          }
-        ]
-      }
+      "name": "latitude",
+      "type": "double",
+      "doc": "returns the latitude of the geo location"
+    },
+    {
+      "name": "longitude",
+      "type": "double",
+      "doc": "returns the longitude of the geo location"
     },
     {
       "name": "payment",
