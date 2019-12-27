@@ -1,0 +1,66 @@
+{
+  "type": "record",
+  "name": "JobAggregatedEvent",
+  "namespace": "de.doit.jobapi.domain.event",
+  "fields": [
+    {
+      "name": "id",
+      "type": {
+        "type": "string",
+        "logicalType": "UUID"
+      }
+    },
+    {
+      "name": "vendorId",
+      "type": {
+        "type": "string",
+        "logicalType": "UUID"
+      }
+    },
+    {
+      "name": "title",
+      "type": "string"
+    },
+    {
+      "name": "description",
+      "type": "string"
+    },
+    {
+      "name": "latitude",
+      "type": "double",
+      "doc": "returns the latitude of the geo location"
+    },
+    {
+      "name": "longitude",
+      "type": "double",
+      "doc": "returns the longitude of the geo location"
+    },
+    {
+      "name": "payment",
+      "type": {
+        "type": "bytes",
+        "logicalType": "decimal",
+        "precision": 2,
+        "scale": 2
+      }
+    },
+    {
+      "name": "createdAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    },
+    {
+      "name": "modifiedAt",
+      "type": [
+        "null",
+        {
+          "type": "long",
+          "logicalType": "timestamp-millis"
+        }
+      ],
+      "default": null
+    }
+  ]
+}

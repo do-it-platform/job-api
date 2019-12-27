@@ -1,6 +1,6 @@
 package de.doit.jobapi.domain.service
 
-import de.doit.jobapi.domain.event.JobDataRecord
+import de.doit.jobapi.domain.event.JobAggregatedEvent
 import de.doit.jobapi.domain.model.Job
 import de.doit.jobapi.domain.model.JobId
 import de.doit.jobapi.domain.model.VendorId
@@ -17,19 +17,19 @@ import org.springframework.stereotype.Service
 internal class KafkaJobQueryService(@Autowired private val streamsFactoryBean: StreamsBuilderFactoryBean): JobQueryService {
 
     private val jobLogTableStore by lazy {
-        streamsFactoryBean.kafkaStreams.store(JOB_AGGREGATE_STATE_STORE_NAME, keyValueStore<String, JobDataRecord>())
+        streamsFactoryBean.kafkaStreams.store(JOB_AGGREGATE_STATE_STORE_NAME, keyValueStore<String, JobAggregatedEvent>())
     }
 
     companion object {
-        fun toJob(jobDataRecord: JobDataRecord): Job {
+        fun toJob(jobAggregatedEvent: JobAggregatedEvent): Job {
             return Job(
-                    JobId(jobDataRecord.getId()),
-                    VendorId(jobDataRecord.getVendorId()),
-                    jobDataRecord.getTitle(),
-                    jobDataRecord.getDescription(),
-                    jobDataRecord.getLatitude(),
-                    jobDataRecord.getLongitude(),
-                    jobDataRecord.getPayment()
+                    JobId(jobAggregatedEvent.getId()),
+                    VendorId(jobAggregatedEvent.getVendorId()),
+                    jobAggregatedEvent.getTitle(),
+                    jobAggregatedEvent.getDescription(),
+                    jobAggregatedEvent.getLatitude(),
+                    jobAggregatedEvent.getLongitude(),
+                    jobAggregatedEvent.getPayment()
             )
         }
     }
