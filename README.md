@@ -15,3 +15,5 @@ docker-compose exec schema-registry sh -c "kafka-avro-console-consumer --bootstr
 ## TODO
 
 * optimize kafka settings
+* use sealed class instead of exception for not found and bad request
+* redirect to api docs on root path

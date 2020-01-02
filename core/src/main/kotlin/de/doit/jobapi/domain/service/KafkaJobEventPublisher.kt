@@ -13,7 +13,8 @@ internal class KafkaJobEventPublisher(@Autowired private val kafkaTemplate: Kafk
                                       @Autowired private val kafkaConfigProperties: KafkaConfigProperties) : JobEventPublisher {
 
     override suspend fun <T: SpecificRecordBase> publish(jobId: JobId, jobEvent: T): T {
-        kafkaTemplate.send(kafkaConfigProperties.topic, jobId.value, jobEvent).completable().await()
+        val (jobEventSink, _) = kafkaConfigProperties
+        kafkaTemplate.send(jobEventSink.topic, jobId.value, jobEvent).completable().await()
         return jobEvent
     }
 }

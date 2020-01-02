@@ -5,4 +5,6 @@ import org.springframework.boot.context.properties.ConstructorBinding
 
 @ConstructorBinding
 @ConfigurationProperties("jobapi.kafka")
-internal data class KafkaConfigProperties(val topic: String, val numberOfPartitions: Int, val replicationFactor: Short)
+internal data class KafkaConfigProperties(val jobEventSink: TopicConfig, val jobAggregateSink: TopicConfig) {
+    data class TopicConfig(val topic: String, val numberOfPartitions: Int, val replicationFactor: Short)
+}
