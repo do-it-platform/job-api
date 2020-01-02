@@ -43,14 +43,14 @@ import java.time.Duration.ofSeconds
 @AutoConfigureWebTestClient
 @Import(SchemaRegistryTestConfig::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@EmbeddedKafka(topics = ["\${jobapi.kafka.job-event-sink.topic}"])
+@EmbeddedKafka(topics = ["\${jobapi.kafka.topic}"])
 class JobResourceIntegrationTest {
 
     @Autowired lateinit var client: WebTestClient
     @Autowired lateinit var easyRandom: EasyRandom
     @Autowired lateinit var kafkaBroker: EmbeddedKafkaBroker
     @Autowired lateinit var jobEventConsumerFactory: ConsumerFactory<String, GenericRecord>
-    @Value("\${jobapi.kafka.job-event-sink.topic}") private lateinit var topic: String
+    @Value("\${jobapi.kafka.topic}") private lateinit var topic: String
 
     @Nested
     @DisplayName("With kafka available")

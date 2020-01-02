@@ -5,7 +5,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.kstream.Initializer
-import org.apache.kafka.streams.kstream.KStream
+import org.apache.kafka.streams.kstream.KTable
 import org.apache.kafka.streams.kstream.Materialized
 import org.apache.kafka.streams.kstream.ValueTransformer
 import org.apache.kafka.streams.kstream.ValueTransformerSupplier
@@ -27,37 +27,23 @@ internal class KafkaStreamsConfig(@Autowired private val kafkaConfigProperties: 
 
     @Bean
     fun createJobLogTopic(): NewTopic {
-        val (jobEventSink, _) = kafkaConfigProperties
         return NewTopic(
-                jobEventSink.topic,
-                jobEventSink.numberOfPartitions,
-                jobEventSink.replicationFactor
+                kafkaConfigProperties.topic,
+                kafkaConfigProperties.numberOfPartitions,
+                kafkaConfigProperties.replicationFactor
         )
     }
 
     @Bean
-    fun createJobAggregatedLogTopic(): NewTopic {
-        val (_, jobAggregateSink) = kafkaConfigProperties
-        return NewTopic(
-                jobAggregateSink.topic,
-                jobAggregateSink.numberOfPartitions,
-                jobAggregateSink.replicationFactor
-        )
-    }
-
-    @Bean
-    fun jobAggregatedStream(streamsBuilder: StreamsBuilder): KStream<String, JobAggregatedEvent> {
-        val (jobEventSink, jobAggregateSink) = kafkaConfigProperties
-
-        return streamsBuilder.stream<String, GenericRecord>(jobEventSink.topic)
+    fun jobAggregateStateStore(streamsBuilder: StreamsBuilder): KTable<String, JobAggregatedEvent> {
+        return streamsBuilder.stream<String, GenericRecord>(kafkaConfigProperties.topic)
                 .transformValues(ValueTransformerSupplier { AddTimestampToRecordTransformer() })
                 .groupByKey()
                 .aggregate(
                         Initializer<JobAggregatedEvent> { null },
                         JobAggregator(),
-                        Materialized.`as`(JOB_AGGREGATE_STATE_STORE_NAME))
-                .toStream()
-                .through(jobAggregateSink.topic)
+                        Materialized.`as`(JOB_AGGREGATE_STATE_STORE_NAME)
+                )
     }
 
     private inner class AddTimestampToRecordTransformer: ValueTransformer<GenericRecord, JobEventWithTimestamp<GenericRecord>> {

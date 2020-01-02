@@ -21,11 +21,6 @@ spring:
 ---
 jobapi:
   kafka:
-    job-event-sink:
-      topic: job-log
-      numberOfPartitions: 1
-      replicationFactor: 1
-    job-aggregate-sink:
-      topic: job-aggregated-log
-      numberOfPartitions: 1
-      replicationFactor: 1
+    topic: job-log
+    numberOfPartitions: 1
+    replicationFactor: 1
