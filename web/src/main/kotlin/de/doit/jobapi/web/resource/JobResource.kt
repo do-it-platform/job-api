@@ -1,7 +1,9 @@
 package de.doit.jobapi.web.resource
 
-import de.doit.jobapi.domain.exception.JobNotFoundException
 import de.doit.jobapi.domain.model.JobId
+import de.doit.jobapi.domain.model.JobOperationResult.Forbidden
+import de.doit.jobapi.domain.model.JobOperationResult.NotFound
+import de.doit.jobapi.domain.model.JobOperationResult.Success
 import de.doit.jobapi.domain.model.VendorId
 import de.doit.jobapi.domain.service.JobService
 import de.doit.jobapi.web.mapping.JobMapper
@@ -59,18 +61,26 @@ class JobResource(@Autowired private val jobMapper: JobMapper, @Autowired privat
                @RequestBody @Valid data: JobRequest): Mono<ResponseEntity<Void>> {
         // for some reason Mono<Unit> return empty object -> {} instead empty response body
         return mono { jobService.update(jobMapper.mapToDomainModel(id, vendorId, data)) }
-                .map { ResponseEntity.noContent().build<Void>() }
-                .onErrorReturn(JobNotFoundException::class.java, ResponseEntity.status(NOT_FOUND).build())
-                .onErrorReturn(IllegalAccessError::class.java, ResponseEntity.status(FORBIDDEN).build())
+                .map {
+                    when (it) {
+                        is Success -> ResponseEntity.noContent().build<Void>()
+                        is NotFound -> ResponseEntity.status(NOT_FOUND).build()
+                        is Forbidden -> ResponseEntity.status(FORBIDDEN).build()
+                    }
+                }
     }
 
     @DeleteMapping("/{id}", produces = [APPLICATION_JSON_VALUE])
     fun delete(@PathVariable @NotBlank id: JobId,
                @RequestHeader("X-User-Id") @NotBlank vendorId: VendorId): Mono<ResponseEntity<Void>> {
         return mono { jobService.delete(id, vendorId) }
-                .map { ResponseEntity.noContent().build<Void>() }
-                .onErrorReturn(JobNotFoundException::class.java, ResponseEntity.status(NOT_FOUND).build())
-                .onErrorReturn(IllegalAccessError::class.java, ResponseEntity.status(FORBIDDEN).build())
+                .map {
+                    when (it) {
+                        is Success -> ResponseEntity.noContent().build<Void>()
+                        is NotFound -> ResponseEntity.status(NOT_FOUND).build()
+                        is Forbidden -> ResponseEntity.status(FORBIDDEN).build()
+                    }
+                }
     }
 
     @ExceptionHandler(ConstraintViolationException::class)

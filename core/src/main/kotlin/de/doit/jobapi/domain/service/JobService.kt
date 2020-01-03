@@ -4,9 +4,12 @@ import de.doit.jobapi.domain.event.JobDataRecord
 import de.doit.jobapi.domain.event.JobDeletedEvent
 import de.doit.jobapi.domain.event.JobPostedEvent
 import de.doit.jobapi.domain.event.JobUpdatedEvent
-import de.doit.jobapi.domain.exception.JobNotFoundException
 import de.doit.jobapi.domain.model.Job
 import de.doit.jobapi.domain.model.JobId
+import de.doit.jobapi.domain.model.JobOperationResult
+import de.doit.jobapi.domain.model.JobOperationResult.Forbidden
+import de.doit.jobapi.domain.model.JobOperationResult.NotFound
+import de.doit.jobapi.domain.model.JobOperationResult.Success
 import de.doit.jobapi.domain.model.VendorId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -41,10 +44,10 @@ class JobService internal constructor(@Autowired private val jobEventPublisher: 
         return job
     }
 
-    suspend fun update(job: Job): Job {
+    suspend fun update(job: Job): JobOperationResult {
         return jobQueryService.findById(job.id)
-                .let { it ?: throw JobNotFoundException(job.id) }
-                .also { if (it.vendorId != job.vendorId) throw IllegalAccessError() }
+                .let { it ?: return NotFound }
+                .also { if (it.vendorId != job.vendorId) return Forbidden }
                 .run {
                     val jobUpdatedEvent = JobUpdatedEvent.newBuilder()
                             .setData(toJobDataRecord(job))
@@ -52,15 +55,16 @@ class JobService internal constructor(@Autowired private val jobEventPublisher: 
 
                     jobEventPublisher.publish(job.id, jobUpdatedEvent)
 
-                    return job
+                    return Success
                 }
     }
 
-    suspend fun delete(jobId: JobId, vendorId: VendorId) {
-        jobQueryService.findById(jobId)
-                .let { it ?: throw JobNotFoundException(jobId) }
-                .also { if (it.vendorId != vendorId) throw IllegalAccessError() }
+    suspend fun delete(jobId: JobId, vendorId: VendorId): JobOperationResult {
+        return jobQueryService.findById(jobId)
+                .let { it ?: return NotFound }
+                .also { if (it.vendorId != vendorId) return Forbidden }
                 .run { jobEventPublisher.publish(jobId, JobDeletedEvent()) }
+                .let { Success }
     }
 
 }
