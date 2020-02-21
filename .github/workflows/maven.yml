@@ -1,6 +1,14 @@
 name: Java CI
 
-on: [push]
+on:
+  push:
+    # Publish `master` as Docker `latest` image.
+    branches:
+      - master
+
+env:
+  # TODO: Change variable to your image's name.
+  IMAGE_NAME: job-api
 
 jobs:
   build:
@@ -15,3 +23,16 @@ jobs:
         java-version: 11
     - name: Build with Maven
       run: ./mvnw -B package --file pom.xml
+    - name: Build image
+      run: docker build . --file Dockerfile --tag image
+    - name: Log into registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+    - name: Push image
+      run: |
+        IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
+        # Use Docker `latest` tag convention
+        [ "$VERSION" == "master" ] && VERSION=latest
+        echo IMAGE_ID=$IMAGE_ID
+        echo VERSION=$VERSION
+        docker tag image $IMAGE_ID:$VERSION
+        docker push $IMAGE_ID:$VERSION
