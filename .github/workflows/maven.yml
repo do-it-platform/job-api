@@ -32,7 +32,7 @@ jobs:
         # Strip git ref prefix from version
         VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
         # Use Docker `latest` tag convention
-        [ "$VERSION" == "master" ] && VERSION=$GITHUB_SHA
+        [ "$VERSION" == "master" ] && VERSION=$(git rev-parse --short HEAD)
         echo IMAGE_ID=$IMAGE_ID
         echo VERSION=$VERSION
         docker tag image $IMAGE_ID:latest
