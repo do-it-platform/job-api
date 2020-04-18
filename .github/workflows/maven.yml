@@ -25,7 +25,7 @@ jobs:
     - name: Publish package
       run: mvn -B deploy
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.MVN_PUBLISH_TOKEN }}
     - name: Build image
       run: docker build . --file Dockerfile --tag image
     - name: Log into registry
