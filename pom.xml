@@ -90,7 +90,7 @@
 			<url>https://maven.pkg.github.com/do-it-platform/maven-packages</url>
 		</snapshotRepository>
 		<repository>
-			<id>github-releases</id>
+			<id>github</id>
 			<name>GitHub do-it-platform Apache Maven Packages</name>
 			<url>https://maven.pkg.github.com/do-it-platform/maven-packages</url>
 		</repository>
