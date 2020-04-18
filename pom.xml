@@ -84,8 +84,13 @@
 	</build>
 
 	<distributionManagement>
+		<snapshotRepository>
+			<id>github-snapshots</id>
+			<name>GitHub do-it-platform Apache Maven Packages</name>
+			<url>https://maven.pkg.github.com/do-it-platform/maven-packages</url>
+		</snapshotRepository>
 		<repository>
-			<id>github</id>
+			<id>github-releases</id>
 			<name>GitHub do-it-platform Apache Maven Packages</name>
 			<url>https://maven.pkg.github.com/do-it-platform/maven-packages</url>
 		</repository>
