@@ -1,0 +1,24 @@
+name: Java Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 12
+      uses: actions/setup-java@v1
+      with:
+        java-version: 12
+    - name: Build and publish package
+      env:
+        GITHUB_TOKEN: ${{ secrets.MVN_PUBLISH_TOKEN }}
+      run: |
+        echo "${{ github.ref }}"
+        echo "${{ toJson(github.event) }}"
+        mvn -B release:prepare -DreleaseVersion=${{ github.ref }} -DdryRun=true

@@ -96,4 +96,10 @@
 		</repository>
 	</distributionManagement>
 
+	<scm>
+		<connection>scm:git:git@github.com:do-it-platform/job-api.git</connection>
+		<url>scm:git:git@github.com:do-it-platform/job-api.git</url>
+		<developerConnection>scm:git:git@github.com:do-it-platform/job-api.git</developerConnection>
+	</scm>
+
 </project>
