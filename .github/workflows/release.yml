@@ -2,7 +2,7 @@ name: Java Release
 
 on:
   release:
-    types: [created, published]
+    types: [created]
 
 jobs:
   build:
@@ -19,6 +19,5 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.MVN_PUBLISH_TOKEN }}
       run: |
-        echo "${{ github.ref }}"
-        echo "${{ toJson(github.event) }}"
-        mvn -B release:prepare -DreleaseVersion=${{ github.ref }} -DdryRun=true
+        echo "${{ github.event.release.tag_name }}"
+        mvn -B release:prepare -DreleaseVersion=${{ github.event.release.tag_name }} -DdryRun=true
