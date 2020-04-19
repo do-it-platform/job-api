@@ -15,5 +15,9 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 12
+    - name: Configure git
+      run: |
+        git config user.email "noreply@github.com"
+        git config user.name "gh-action-release"
     - name: Build and prepare release
       run: mvn -B release:prepare -DreleaseVersion=${{ github.event.release.tag_name }}
