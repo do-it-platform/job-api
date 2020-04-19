@@ -18,7 +18,7 @@
 
 	<groupId>de.doit.jobapi</groupId>
 	<artifactId>parent</artifactId>
-	<version>0.0.1</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<name>job-api</name>
 
 	<properties>
@@ -99,7 +99,7 @@
 		<connection>scm:git:git@github.com:do-it-platform/job-api.git</connection>
 		<url>scm:git:git@github.com:do-it-platform/job-api.git</url>
 		<developerConnection>scm:git:git@github.com:do-it-platform/job-api.git</developerConnection>
-	  <tag>parent-0.0.1</tag>
+	  <tag>HEAD</tag>
   </scm>
 
 </project>
