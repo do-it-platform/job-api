@@ -37,7 +37,7 @@ jobs:
         [ "$VERSION" == "master" ] && VERSION=$(git rev-parse --short HEAD)
         echo IMAGE_ID=$IMAGE_ID
         echo VERSION=$VERSION
-        docker tag image $IMAGE_ID:latest
-        docker push $IMAGE_ID:latest
         docker tag image $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:$VERSION
+        docker tag image $IMAGE_ID:latest
+        docker push $IMAGE_ID:latest
