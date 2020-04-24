@@ -7,7 +7,7 @@ on:
       - master
 
 env:
-  IMAGE_NAME: web
+  IMAGE_NAME: job-api
 
 jobs:
   build:
