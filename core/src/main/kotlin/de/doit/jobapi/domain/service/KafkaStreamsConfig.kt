@@ -10,11 +10,15 @@ import org.apache.kafka.streams.kstream.Materialized
 import org.apache.kafka.streams.kstream.ValueTransformer
 import org.apache.kafka.streams.kstream.ValueTransformerSupplier
 import org.apache.kafka.streams.processor.ProcessorContext
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.annotation.EnableKafkaStreams
+import org.springframework.kafka.config.StreamsBuilderFactoryBeanCustomizer
+
 
 @Configuration
 @EnableKafkaStreams
@@ -22,7 +26,15 @@ import org.springframework.kafka.annotation.EnableKafkaStreams
 internal class KafkaStreamsConfig(@Autowired private val kafkaConfigProperties: KafkaConfigProperties) {
 
     companion object {
+        private val LOG: Logger = LoggerFactory.getLogger(KafkaStreamsConfig::class.java)
         internal const val JOB_AGGREGATE_STATE_STORE_NAME = "job-aggregate-state-store"
+    }
+
+    @Bean
+    fun customizeStreamsFactoryBean(): StreamsBuilderFactoryBeanCustomizer {
+        return StreamsBuilderFactoryBeanCustomizer {
+            it.setUncaughtExceptionHandler { _, e -> LOG.error("Streams Error.", e) }
+        }
     }
 
     @Bean
